@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "95185547053",
+    "project_id": "histour-database",
+    "storage_bucket": "histour-database.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:95185547053:android:2aa6d53bd60e1d1f9aada4",
+        "android_client_info": {
+          "package_name": "com.example.histour_androidaplication"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "95185547053-116lbdit2dog0lq13ljsaq5majf32ma3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.histour_androidaplication",
+            "certificate_hash": "42abc26dabfe8a8a180f17ea33eee1e96292dad7"
+          }
+        },
+        {
+          "client_id": "95185547053-kgnv82o66tmuui5ssaubba8cnqse0knr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAAKX20n-KPs32aL8ZsIDsdzImpKf2cRwM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "95185547053-kgnv82o66tmuui5ssaubba8cnqse0knr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

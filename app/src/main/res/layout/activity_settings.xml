@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Configurações"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_gravity="center_horizontal" />
+
+    <!-- Alternar entre modo claro e escuro -->
+    <Switch
+        android:id="@+id/switch_theme"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Modo escuro"/>
+
+    <!-- Alterar Nome -->
+    <EditText
+        android:id="@+id/editTextUsername"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Novo Nome de Utilizador"/>
+
+    <Button
+        android:id="@+id/button_save_username"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Salvar Nome"/>
+
+    <!-- Alterar Senha -->
+    <EditText
+        android:id="@+id/editTextPassword"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Nova Password"
+        android:inputType="textPassword"/>
+
+    <Button
+        android:id="@+id/button_save_password"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Salvar Password"/>
+
+</LinearLayout>

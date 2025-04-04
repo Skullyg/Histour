@@ -1,0 +1,17 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/nav_favorites"
+        android:title="Favoritos"
+        android:icon="@drawable/ic_favorite"/>
+
+    <item android:id="@+id/nav_settings"
+        android:title="Configurações"
+        android:icon="@drawable/ic_settings"/>
+
+    <item android:id="@+id/nav_route"
+        android:title="Escolher Rota"
+        android:icon="@drawable/ic_home"/>
+
+    <item android:id="@+id/nav_logout"
+        android:title="Sair"
+        android:icon="@drawable/ic_logout"/>
+</menu>
