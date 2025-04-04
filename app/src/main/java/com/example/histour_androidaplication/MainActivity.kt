@@ -22,6 +22,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.navigation.NavigationView
@@ -181,7 +182,13 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                     poiNames.add(poi.nome)
 
                     val position = LatLng(poi.latitude, poi.longitude)
-                    val marker = googleMap.addMarker(MarkerOptions().position(position).title(poi.nome))
+                    val markerIcon = BitmapDescriptorFactory.fromResource(R.drawable.marker_orange) // <- usa ícone laranja
+                    val marker = googleMap.addMarker(
+                        MarkerOptions()
+                            .position(position)
+                            .title(poi.nome)
+                            .icon(markerIcon)
+                    )
                     marker?.tag = poi
                 }
 
