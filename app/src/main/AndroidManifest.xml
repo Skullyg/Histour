@@ -56,6 +56,12 @@
 
         <activity android:name=".SettingsActivity" />
 
+        <activity android:name=".VerComentariosActivity" />
+
+        <activity android:name=".ComentarioActivity" />
+
+
+
 
 
 

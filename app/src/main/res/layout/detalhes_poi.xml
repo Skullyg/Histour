@@ -65,6 +65,31 @@
             android:padding="8dp"
             app:tint="@color/black" />
 
+        <Button
+            android:id="@+id/button_visited"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Marcar como Visitado"
+            android:layout_marginTop="16dp"
+            android:layout_gravity="center_horizontal" />
+
+
+        <Button
+            android:id="@+id/button_comentar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/comentar"
+            android:visibility="gone"
+            />
+
+        <Button
+            android:id="@+id/button_ver_comentarios"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/ver_comentarios"
+            />
+
+
 
     </LinearLayout>
 </ScrollView>

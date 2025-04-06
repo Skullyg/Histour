@@ -4,6 +4,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.ImageView
@@ -17,6 +18,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlin.jvm.java
 
 class PoiDetailActivity : AppCompatActivity() {
 
@@ -45,14 +47,18 @@ class PoiDetailActivity : AppCompatActivity() {
         buttonFavorite = findViewById(R.id.button_favorite)
         val tipo = intent.getStringExtra("tipo") ?: "Outro"
         val textTipo = findViewById<TextView>(R.id.textTipo)
-        textTipo.text = "Tipo: $tipo"
+        textTipo.text = getString(R.string.tipo_label, tipo)
+        val buttonVisited = findViewById<Button>(R.id.button_visited)
+        val buttonComentar = findViewById<Button>(R.id.button_comentar)
+        val buttonVerComentarios = findViewById<Button>(R.id.button_ver_comentarios)
+
 
 
         textNome.text = nome
         textDescricao.text = descricao
 
         // Carregar a imagem com Glide
-        if (!imagemUrl.isNullOrEmpty()) {
+        if (imagemUrl.isNotEmpty()) {
             Glide.with(this).load(imagemUrl).into(imageViewPOI)
         } else {
             imageViewPOI.setImageResource(R.drawable.ic_launcher_background)
@@ -91,6 +97,29 @@ class PoiDetailActivity : AppCompatActivity() {
         buttonFavorite.setOnClickListener {
             toggleFavorite(nome, descricao, latitude, longitude, imagemUrl)
         }
+
+        verificarSeVisitado(nome, buttonVisited)
+
+
+        buttonVisited.setOnClickListener {
+            marcarComoVisitado(nome, descricao, latitude, longitude, imagemUrl, buttonVisited)
+        }
+
+        buttonComentar.visibility = View.VISIBLE
+
+        buttonComentar.setOnClickListener {
+            val intent = Intent(this, ComentarioActivity::class.java)
+            intent.putExtra("poi_nome", nome)
+            startActivity(intent)
+        }
+
+        buttonVerComentarios.setOnClickListener {
+            val intent = Intent(this, VerComentariosActivity::class.java)
+            intent.putExtra("poi_nome", nome)
+            startActivity(intent)
+        }
+
+
     }
 
     private fun getUserLocation() {
@@ -168,4 +197,63 @@ class PoiDetailActivity : AppCompatActivity() {
             }
         }
     }
+
+    private fun marcarComoVisitado(
+        nome: String,
+        descricao: String,
+        latitude: Double,
+        longitude: Double,
+        imagemUrl: String,
+        button: Button
+    ) {
+        if (userId == null) {
+            Toast.makeText(this, "É necessário iniciar sessão!", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val visitaRef = db.collection("Utilizadores").document(userId)
+            .collection("Visitas").document(nome)
+
+        visitaRef.get().addOnSuccessListener { document ->
+            if (document.exists()) {
+                Toast.makeText(this, "Já marcaste este ponto como visitado!", Toast.LENGTH_SHORT).show()
+                button.text = getString(R.string.ja_visitado)
+                button.isEnabled = false
+                findViewById<Button>(R.id.button_comentar).visibility = View.VISIBLE
+            } else {
+                val visita = mapOf(
+                    "nome" to nome,
+                    "descricao" to descricao,
+                    "latitude" to latitude,
+                    "longitude" to longitude,
+                    "imagemUrl" to imagemUrl,
+                    "timestamp" to System.currentTimeMillis()
+                )
+                visitaRef.set(visita)
+                    .addOnSuccessListener {
+                        Toast.makeText(this, "Marcado como visitado!", Toast.LENGTH_SHORT).show()
+                        button.text = getString(R.string.ja_visitado)
+                        button.isEnabled = false
+                        findViewById<Button>(R.id.button_comentar).visibility = View.VISIBLE
+                    }
+            }
+        }
+    }
+
+
+
+    private fun verificarSeVisitado(nome: String, button: Button) {
+        if (userId == null) return
+
+        val visitaRef = db.collection("Utilizadores").document(userId)
+            .collection("Visitas").document(nome)
+
+        visitaRef.get().addOnSuccessListener { document ->
+            if (document.exists()) {
+                button.text = getString(R.string.ja_visitado)
+                button.isEnabled = false
+            }
+        }
+    }
+
 }
