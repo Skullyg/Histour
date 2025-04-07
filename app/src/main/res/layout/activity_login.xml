@@ -31,7 +31,7 @@
         android:layout_height="wrap_content"
         android:text="Entrar"
         android:textColor="@android:color/white"
-        android:backgroundTint="@android:color/black"
+        android:backgroundTint="@color/laranja_custom"
         android:layout_marginTop="20dp"/>
 
     <!-- Texto para criar conta -->
@@ -80,15 +80,6 @@
             android:src="@drawable/googleicon"
             android:layout_marginEnd="20dp"
             android:contentDescription="Login com Google"/>
-
-        <ImageView
-            android:id="@+id/btnFacebook"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:src="@drawable/facebookicon"
-            android:contentDescription="Login com Facebook"/>
     </LinearLayout>
 
 </LinearLayout>

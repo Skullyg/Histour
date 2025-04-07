@@ -31,7 +31,8 @@
         android:id="@+id/button_save_username"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Salvar Nome"/>
+        android:text="Salvar Nome"
+        android:backgroundTint="@color/laranja_custom"/>
 
     <!-- Alterar Senha -->
     <EditText
@@ -39,12 +40,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Nova Password"
-        android:inputType="textPassword"/>
+        android:inputType="textPassword"
+        />
 
     <Button
         android:id="@+id/button_save_password"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Salvar Password"/>
+        android:text="Salvar Password"
+        android:backgroundTint="@color/laranja_custom"/>
 
 </LinearLayout>

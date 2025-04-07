@@ -53,6 +53,7 @@
             android:layout_height="wrap_content"
             android:text="Criar Rota"
             android:layout_marginTop="16dp"
+            android:backgroundTint="@color/laranja_custom"
             android:layout_gravity="center_horizontal" />
 
         <ImageButton
@@ -71,6 +72,7 @@
             android:layout_height="wrap_content"
             android:text="Marcar como Visitado"
             android:layout_marginTop="16dp"
+            android:backgroundTint="@color/laranja_custom"
             android:layout_gravity="center_horizontal" />
 
 
@@ -86,6 +88,7 @@
             android:id="@+id/button_ver_comentarios"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:backgroundTint="@color/laranja_custom"
             android:text="@string/ver_comentarios"
             />
 

@@ -41,6 +41,6 @@
         android:layout_height="wrap_content"
         android:text="Entrar"
         android:textColor="@android:color/white"
-        android:backgroundTint="@android:color/black"
+        android:backgroundTint="@color/laranja_custom"
         android:layout_marginTop="20dp"/>
 </LinearLayout>

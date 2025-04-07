@@ -80,7 +80,7 @@
             android:layout_height="wrap_content"
             android:text="Criar Conta"
             android:textColor="@android:color/white"
-            android:backgroundTint="@android:color/black"
+            android:backgroundTint="@color/laranja_custom"
             android:layout_marginBottom="20dp"/>
 
         <!-- Texto Voltar ao Login -->
