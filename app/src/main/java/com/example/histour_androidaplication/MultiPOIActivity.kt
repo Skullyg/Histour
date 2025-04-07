@@ -39,21 +39,21 @@ class MultiPOIActivity : AppCompatActivity(), OnMapReadyCallback {
             obterRotasTodosPOIs(selectedPOIs, "driving") { linha, duracao ->
                 runOnUiThread {
                     linha?.let { googleMap.addPolyline(it) }
-                    findViewById<TextView>(R.id.textoDuracaoCarro).text = "Carro: $duracao"
+                    findViewById<TextView>(R.id.travel_time_car).text = "Carro: $duracao"
                 }
             }
 
             obterRotasTodosPOIs(selectedPOIs, "walking") { linha, duracao ->
                 runOnUiThread {
                     linha?.let { googleMap.addPolyline(it) }
-                    findViewById<TextView>(R.id.textoDuracaoAPe).text = "A pé: $duracao"
+                    findViewById<TextView>(R.id.travel_time_walk).text = "A pé: $duracao"
                 }
             }
 
             obterRotasTodosPOIs(selectedPOIs, "transit") { linha, duracao ->
                 runOnUiThread {
                     linha?.let { googleMap.addPolyline(it) }
-                    findViewById<TextView>(R.id.textoDuracaoTransportes).text = "Transportes: $duracao"
+                    findViewById<TextView>(R.id.travel_time_transit).text = "Transportes: $duracao"
                 }
             }
         }
