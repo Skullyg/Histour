@@ -19,12 +19,15 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlin.jvm.java
+import android.media.MediaPlayer
+import android.net.Uri
 
 class PoiDetailActivity : AppCompatActivity() {
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var currentLocation: LatLng? = null
     private lateinit var buttonFavorite: ImageButton
+    private var mediaPlayer: MediaPlayer? = null
     private val db = FirebaseFirestore.getInstance()
     private val userId = FirebaseAuth.getInstance().currentUser?.uid
 
@@ -51,6 +54,8 @@ class PoiDetailActivity : AppCompatActivity() {
         val buttonVisited = findViewById<Button>(R.id.button_visited)
         val buttonComentar = findViewById<Button>(R.id.button_comentar)
         val buttonVerComentarios = findViewById<Button>(R.id.button_ver_comentarios)
+        val buttonOuvirAudio = findViewById<Button>(R.id.button_ouvir_audio)
+        val audioUrl = intent.getStringExtra("audioUrl")
 
 
 
@@ -117,6 +122,28 @@ class PoiDetailActivity : AppCompatActivity() {
             val intent = Intent(this, VerComentariosActivity::class.java)
             intent.putExtra("poi_nome", nome)
             startActivity(intent)
+        }
+        if (!audioUrl.isNullOrEmpty()) {
+            buttonOuvirAudio.setOnClickListener {
+                if (mediaPlayer == null) {
+                    mediaPlayer = MediaPlayer().apply {
+                        setDataSource(audioUrl)
+                        prepare()
+                        start()
+                    }
+                    Toast.makeText(this, "A reproduzir áudio...", Toast.LENGTH_SHORT).show()
+                } else {
+                    if (mediaPlayer!!.isPlaying) {
+                        mediaPlayer!!.pause()
+                        Toast.makeText(this, "Áudio pausado", Toast.LENGTH_SHORT).show()
+                    } else {
+                        mediaPlayer!!.start()
+                        Toast.makeText(this, "A reproduzir áudio...", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        } else {
+            buttonOuvirAudio.visibility = View.GONE
         }
 
 
@@ -255,6 +282,13 @@ class PoiDetailActivity : AppCompatActivity() {
                 findViewById<Button>(R.id.button_comentar).visibility = View.VISIBLE
             }
         }
+    }
+
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mediaPlayer?.release()
+        mediaPlayer = null
     }
 
 

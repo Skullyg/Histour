@@ -8,6 +8,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.histour_androidaplication.models.DirectionsResponse
+import com.example.histour_androidaplication.models.Poi
 import com.example.histour_androidaplication.network.RetrofitClient
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -23,6 +24,8 @@ import retrofit2.Response
 import com.google.android.gms.maps.model.PatternItem
 import com.google.android.gms.maps.model.Dash
 import com.google.android.gms.maps.model.Gap
+import kotlin.collections.isNullOrEmpty
+import kotlin.collections.map
 
 class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -51,6 +54,12 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
         travelTimeCar = findViewById(R.id.travel_time_car)
         travelTimeWalk = findViewById(R.id.travel_time_walk)
         travelTimeTransit = findViewById(R.id.travel_time_transit)
+        val selectedPOIs = intent.getParcelableArrayListExtra<Poi>("selectedPOIs")
+        if (!selectedPOIs.isNullOrEmpty()) {
+            poiList = selectedPOIs.map { LatLng(it.latitude, it.longitude) } as ArrayList<LatLng>
+            destination = poiList.last() // Define o destino como o último POI
+        }
+
 
 
 

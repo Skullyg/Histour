@@ -1,26 +1,22 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- res/layout/activity_planeador_de_rota.xml -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:padding="16dp">
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Escolha os POIs para a rota:"
-        android:textSize="18sp"
-        android:textStyle="bold"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewPOIs"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"/>
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
 
     <Button
-        android:id="@+id/btnConfirmRoute"
+        android:id="@+id/button_confirmar_rota"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Confirmar Rota"
-        android:layout_marginTop="16dp"/>
+        android:text="Criar Rota"
+        android:layout_marginTop="16dp"
+        android:backgroundTint="@color/laranja_custom"/>
 </LinearLayout>

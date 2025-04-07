@@ -241,6 +241,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 val intent = Intent(this, SettingsActivity::class.java)
                 startActivity(intent)
             }
+            R.id.nav_route -> {
+                val intent = Intent(this, PlaneadorDeRotaActivity::class.java)
+                startActivity(intent)
+            }
 
 
             R.id.nav_logout -> {
