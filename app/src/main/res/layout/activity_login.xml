@@ -75,11 +75,11 @@
             android:id="@+id/btnGoogle"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:src="@drawable/googleicon"
             android:layout_marginEnd="20dp"
-            android:contentDescription="Login com Google"/>
+            android:clickable="true"
+            android:contentDescription="Login com Google"
+            android:focusable="true"
+            android:src="@drawable/googleicon" />
     </LinearLayout>
 
 </LinearLayout>

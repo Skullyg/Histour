@@ -1,7 +1,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/nav_favorites"
         android:title="Favoritos"
-        android:icon="@drawable/ic_favorite"/>
+        android:icon="@drawable/ic_favorite_filled"/>
 
     <item android:id="@+id/nav_settings"
         android:title="Configurações"
@@ -9,7 +9,7 @@
 
     <item android:id="@+id/nav_route"
         android:title="Escolher Rota"
-        android:icon="@drawable/ic_home"/>
+        android:icon="@drawable/baseline_assistant_direction_24"/>
 
     <item android:id="@+id/nav_logout"
         android:title="Sair"

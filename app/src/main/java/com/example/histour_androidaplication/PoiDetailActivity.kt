@@ -105,7 +105,7 @@ class PoiDetailActivity : AppCompatActivity() {
             marcarComoVisitado(nome, descricao, latitude, longitude, imagemUrl, buttonVisited)
         }
 
-        buttonComentar.visibility = View.VISIBLE
+
 
         buttonComentar.setOnClickListener {
             val intent = Intent(this, ComentarioActivity::class.java)
@@ -252,8 +252,10 @@ class PoiDetailActivity : AppCompatActivity() {
             if (document.exists()) {
                 button.text = getString(R.string.ja_visitado)
                 button.isEnabled = false
+                findViewById<Button>(R.id.button_comentar).visibility = View.VISIBLE
             }
         }
     }
+
 
 }

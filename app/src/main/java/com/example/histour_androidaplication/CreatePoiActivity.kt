@@ -19,6 +19,10 @@ class CreatePoiActivity : AppCompatActivity() {
     private lateinit var btnGuardarPoi: Button
     private lateinit var btnSelectImage: Button
     private lateinit var imgPreview: ImageView
+    private lateinit var btnSelectAudio: Button
+    private var audioUri: Uri? = null
+    private val AUDIO_PICK_CODE = 101
+
 
     private var imageUri: Uri? = null
     private val db = FirebaseFirestore.getInstance()
@@ -37,6 +41,7 @@ class CreatePoiActivity : AppCompatActivity() {
         btnGuardarPoi = findViewById(R.id.btnSalvar)
         btnSelectImage = findViewById(R.id.btn_select_image)
         imgPreview = findViewById(R.id.poi_image_preview)
+        btnSelectAudio = findViewById(R.id.btnSelectAudio)
 
         latitude = intent.getDoubleExtra("latitude", 0.0)
         longitude = intent.getDoubleExtra("longitude", 0.0)
@@ -52,13 +57,22 @@ class CreatePoiActivity : AppCompatActivity() {
             startActivityForResult(intent, 100)
         }
 
+        btnSelectAudio.setOnClickListener {
+            val intent = Intent(Intent.ACTION_GET_CONTENT)
+            intent.type = "audio/*"
+            startActivityForResult(intent, AUDIO_PICK_CODE)
+        }
+
         btnGuardarPoi.setOnClickListener {
             if (imageUri != null) {
-                uploadImageAndSavePoi()
+                uploadImageAndAudioThenSavePoi()
+            } else if (audioUri != null) {
+                uploadAudioThenSavePoi("")
             } else {
-                savePoiToFirestore("")
+                savePoiToFirestore("", "")
             }
         }
+
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -68,16 +82,22 @@ class CreatePoiActivity : AppCompatActivity() {
             imageUri = data.data
             imgPreview.setImageURI(imageUri)
         }
+        else if (requestCode == AUDIO_PICK_CODE && resultCode == Activity.RESULT_OK && data != null) {
+            audioUri = data.data
+            Toast.makeText(this, "Áudio selecionado com sucesso!", Toast.LENGTH_SHORT).show()
+        }
     }
 
-    private fun uploadImageAndSavePoi() {
-        val fileName = "pois/${UUID.randomUUID()}.jpg"
-        val storageRef = storage.reference.child(fileName)
-
-        storageRef.putFile(imageUri!!)
+    private fun uploadImageAndAudioThenSavePoi() {
+        val imageRef = storage.reference.child("pois/${UUID.randomUUID()}.jpg")
+        imageRef.putFile(imageUri!!)
             .addOnSuccessListener {
-                storageRef.downloadUrl.addOnSuccessListener { imageUrl ->
-                    savePoiToFirestore(imageUrl.toString())
+                imageRef.downloadUrl.addOnSuccessListener { imageUrl ->
+                    if (audioUri != null) {
+                        uploadAudioThenSavePoi(imageUrl.toString())
+                    } else {
+                        savePoiToFirestore(imageUrl.toString(), "")
+                    }
                 }
             }
             .addOnFailureListener {
@@ -85,7 +105,21 @@ class CreatePoiActivity : AppCompatActivity() {
             }
     }
 
-    private fun savePoiToFirestore(imageUrl: String) {
+    private fun uploadAudioThenSavePoi(imageUrl: String) {
+        val audioRef = storage.reference.child("audios/${UUID.randomUUID()}.mp3")
+        audioRef.putFile(audioUri!!)
+            .addOnSuccessListener {
+                audioRef.downloadUrl.addOnSuccessListener { audioUrl ->
+                    savePoiToFirestore(imageUrl, audioUrl.toString())
+                }
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Erro ao carregar áudio", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+
+    private fun savePoiToFirestore(imageUrl: String, audioUrl: String) {
         val nome = editTextNome.text.toString().trim()
         val descricao = editTextDescricao.text.toString().trim()
         val tipoPoi = spinnerTipoPoi.selectedItem.toString()

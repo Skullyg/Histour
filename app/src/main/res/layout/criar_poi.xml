@@ -58,6 +58,15 @@
         android:backgroundTint="#FFA500"
         android:text="Escolher Imagem"/>
 
+    <!-- Botão para selecionar um ficheiro de áudio -->
+    <Button
+        android:id="@+id/btnSelectAudio"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Selecionar Áudio do Telemóvel"
+        android:backgroundTint="#FFA500"/>
+
+
     <Button
         android:id="@+id/btnSalvar"
         android:layout_width="match_parent"
