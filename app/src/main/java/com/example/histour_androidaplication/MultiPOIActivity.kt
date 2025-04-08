@@ -9,6 +9,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.PolylineOptions
@@ -64,9 +65,28 @@ class MultiPOIActivity : AppCompatActivity(), OnMapReadyCallback {
         googleMap = map
 
         if (selectedPOIs.isNotEmpty()) {
-            selectedPOIs.forEach { poi ->
+            val coresMarcadores = listOf(
+                BitmapDescriptorFactory.HUE_ORANGE,
+                BitmapDescriptorFactory.HUE_AZURE,
+                BitmapDescriptorFactory.HUE_GREEN,
+                BitmapDescriptorFactory.HUE_RED,
+                BitmapDescriptorFactory.HUE_CYAN,
+                BitmapDescriptorFactory.HUE_MAGENTA,
+                BitmapDescriptorFactory.HUE_ROSE,
+                BitmapDescriptorFactory.HUE_YELLOW,
+                BitmapDescriptorFactory.HUE_VIOLET
+            )
+
+            selectedPOIs.forEachIndexed { index, poi ->
                 val location = LatLng(poi.latitude, poi.longitude)
-                googleMap.addMarker(MarkerOptions().position(location).title(poi.nome))
+                val cor = coresMarcadores.getOrElse(index) { BitmapDescriptorFactory.HUE_BLUE }
+
+                googleMap.addMarker(
+                    MarkerOptions()
+                        .position(location)
+                        .title(poi.nome)
+                        .icon(BitmapDescriptorFactory.defaultMarker(cor))
+                )
             }
 
             val firstLocation = LatLng(selectedPOIs[0].latitude, selectedPOIs[0].longitude)

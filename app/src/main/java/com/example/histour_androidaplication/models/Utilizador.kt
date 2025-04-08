@@ -6,9 +6,11 @@ import android.os.Parcelable
 data class Utilizador(
     var id: String = "",
     var nome: String = "",
-    var email: String = ""
+    var email: String = "",
+    var tipo: String = "utilizador"
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
+        parcel.readString() ?: "",
         parcel.readString() ?: "",
         parcel.readString() ?: "",
         parcel.readString() ?: ""
@@ -18,6 +20,7 @@ data class Utilizador(
         parcel.writeString(id)
         parcel.writeString(nome)
         parcel.writeString(email)
+        parcel.writeString(tipo)
     }
 
     override fun describeContents(): Int {
@@ -25,12 +28,7 @@ data class Utilizador(
     }
 
     companion object CREATOR : Parcelable.Creator<Utilizador> {
-        override fun createFromParcel(parcel: Parcel): Utilizador {
-            return Utilizador(parcel)
-        }
-
-        override fun newArray(size: Int): Array<Utilizador?> {
-            return arrayOfNulls(size)
-        }
+        override fun createFromParcel(parcel: Parcel): Utilizador = Utilizador(parcel)
+        override fun newArray(size: Int): Array<Utilizador?> = arrayOfNulls(size)
     }
 }

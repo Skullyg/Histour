@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.histour_androidaplication.models.Comentario
+import com.google.firebase.firestore.FirebaseFirestore
 
 class ComentariosAdapter(private val comentarios: List<Comentario>) :
     RecyclerView.Adapter<ComentariosAdapter.ComentarioViewHolder>() {
@@ -23,7 +24,19 @@ class ComentariosAdapter(private val comentarios: List<Comentario>) :
 
     override fun onBindViewHolder(holder: ComentarioViewHolder, position: Int) {
         val comentario = comentarios[position]
-        holder.textUser.text = "User: ${comentario.userId.take(6)}..." // Exemplo
+
+        // Buscar o nome do utilizador com base no userId
+        FirebaseFirestore.getInstance().collection("Utilizadores")
+            .document(comentario.userId)
+            .get()
+            .addOnSuccessListener { document ->
+                val nome = document.getString("nome") ?: "Utilizador"
+                holder.textUser.text = nome
+            }
+            .addOnFailureListener {
+                holder.textUser.text = "Utilizador"
+            }
+
         holder.textComentario.text = comentario.comentario
     }
 

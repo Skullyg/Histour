@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.util.Patterns
 import android.widget.Button
 import android.widget.EditText
+import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -19,6 +20,8 @@ class RegisterActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register)
+        val radioGroupTipo = findViewById<RadioGroup>(R.id.radioGroupTipo)
+
 
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
@@ -73,11 +76,15 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     private fun registerUser(nome: String, email: String, password: String) {
+        val radioGroupTipo = findViewById<RadioGroup>(R.id.radioGroupTipo)
+        val tipoSelecionadoId = radioGroupTipo.checkedRadioButtonId
+        val tipoConta = if (tipoSelecionadoId == R.id.radioAdmin) "admin" else "utilizador"
+
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
                     val userId = auth.currentUser?.uid ?: return@addOnCompleteListener
-                    val utilizador = Utilizador(userId, nome, email)
+                    val utilizador = Utilizador(userId, nome, email, tipoConta)
 
                     db.collection("Utilizadores").document(userId).set(utilizador)
                         .addOnSuccessListener {
@@ -94,6 +101,7 @@ class RegisterActivity : AppCompatActivity() {
                 }
             }
     }
+
 
 
 }

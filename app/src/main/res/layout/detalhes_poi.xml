@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:padding="20dp"
+    android:background="@android:color/white">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -11,23 +13,29 @@
         android:orientation="vertical"
         android:gravity="center_horizontal">
 
+        <!-- Imagem -->
         <ImageView
             android:id="@+id/imageViewPOI"
-            android:layout_width="300dp"
+            android:layout_width="match_parent"
             android:layout_height="200dp"
             android:scaleType="centerCrop"
-            android:src="@drawable/ic_launcher_background" />
+            android:src="@drawable/ic_launcher_background"
+            android:background="@android:color/darker_gray"
+            android:layout_marginBottom="16dp" />
 
+        <!-- Nome -->
         <TextView
             android:id="@+id/textNome"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Nome do POI"
-            android:textSize="22sp"
+            android:textSize="24sp"
             android:textStyle="bold"
             android:gravity="center"
-            android:layout_marginTop="16dp" />
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="8dp" />
 
+        <!-- Tipo -->
         <TextView
             android:id="@+id/textTipo"
             android:layout_width="match_parent"
@@ -35,79 +43,93 @@
             android:text="Tipo do POI"
             android:textSize="16sp"
             android:gravity="center"
-            android:layout_marginTop="8dp" />
+            android:textColor="@android:color/darker_gray"
+            android:layout_marginBottom="12dp" />
 
-
+        <!-- Descrição -->
         <TextView
             android:id="@+id/textDescricao"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Descrição do POI"
             android:textSize="16sp"
-            android:gravity="center"
-            android:layout_marginTop="8dp" />
+            android:gravity="start"
+            android:maxLines="4"
+            android:ellipsize="end"
+            android:layout_marginBottom="24dp"
+            android:clickable="true"
+            android:focusable="true" />
 
+
+        <!-- Botões principais -->
         <Button
             android:id="@+id/button_route"
-            android:layout_width="wrap_content"
+            android:layout_width="196dp"
             android:layout_height="wrap_content"
-            android:text="Criar Rota"
-            android:layout_marginTop="16dp"
+            android:layout_marginBottom="12dp"
             android:backgroundTint="@color/laranja_custom"
-            android:layout_gravity="center_horizontal" />
+            android:text="Criar Rota"
+            android:textColor="@android:color/white" />
 
         <ImageButton
             android:id="@+id/button_favorite"
-            android:layout_width="wrap_content"
+            android:layout_width="70dp"
             android:layout_height="wrap_content"
-            android:src="@drawable/ic_favorite_border"
+            android:layout_marginBottom="12dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Adicionar aos favoritos"
-            android:padding="8dp"
-            app:tint="@color/black" />
+            android:padding="12dp"
+            android:src="@drawable/ic_favorite_filled" />
 
         <Button
             android:id="@+id/button_visited"
-            android:layout_width="wrap_content"
+            android:layout_width="196dp"
             android:layout_height="wrap_content"
-            android:text="Marcar como Visitado"
-            android:layout_marginTop="16dp"
+            android:layout_marginBottom="12dp"
             android:backgroundTint="@color/laranja_custom"
-            android:layout_gravity="center_horizontal" />
-
+            android:text="Marcar como Visitado"
+            android:textColor="@android:color/white" />
 
         <Button
             android:id="@+id/button_comentar"
-            android:layout_width="wrap_content"
+            android:layout_width="196dp"
             android:layout_height="wrap_content"
             android:text="@string/comentar"
             android:visibility="gone"
-            android:layout_marginTop="16dp"
+            android:textColor="@android:color/white"
             android:backgroundTint="@color/laranja_custom"
-            android:layout_gravity="center_horizontal"
-            />
+            android:layout_marginBottom="12dp" />
 
         <Button
             android:id="@+id/button_ver_comentarios"
-            android:layout_width="wrap_content"
+            android:layout_width="196dp"
             android:layout_height="wrap_content"
-            android:backgroundTint="@color/laranja_custom"
             android:text="@string/ver_comentarios"
-            android:layout_marginTop="16dp"
-            android:layout_gravity="center_horizontal"
-            />
+            android:textColor="@android:color/white"
+            android:backgroundTint="@color/laranja_custom"
+            android:layout_marginBottom="12dp" />
 
         <Button
             android:id="@+id/button_ouvir_audio"
-            android:layout_width="wrap_content"
+            android:layout_width="196dp"
             android:layout_height="wrap_content"
             android:text="Ouvir Áudio"
-            android:layout_marginTop="16dp"
+            android:textColor="@android:color/white"
             android:backgroundTint="@color/laranja_custom"
-            android:layout_gravity="center_horizontal" />
+            android:layout_marginBottom="20dp"
+            tools:ignore="HardcodedText" />
 
-
-
+        <!-- Só visível se for administrador -->
+        <Button
+            android:id="@+id/button_eliminar_poi"
+            android:layout_width="196dp"
+            android:layout_height="wrap_content"
+            android:text="Eliminar POI"
+            android:textColor="@android:color/white"
+            android:backgroundTint="#D32F2F"
+            android:visibility="gone"
+            android:layout_marginBottom="16dp"
+            tools:ignore="HardcodedText" />
 
     </LinearLayout>
 </ScrollView>

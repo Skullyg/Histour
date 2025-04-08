@@ -30,6 +30,8 @@ class PoiDetailActivity : AppCompatActivity() {
     private var mediaPlayer: MediaPlayer? = null
     private val db = FirebaseFirestore.getInstance()
     private val userId = FirebaseAuth.getInstance().currentUser?.uid
+    private lateinit var buttonEliminarPoi: Button
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,6 +47,16 @@ class PoiDetailActivity : AppCompatActivity() {
 
         val textNome = findViewById<TextView>(R.id.textNome)
         val textDescricao = findViewById<TextView>(R.id.textDescricao)
+        textDescricao.text = descricao
+        textDescricao.setOnClickListener {
+            val dialog = android.app.AlertDialog.Builder(this)
+                .setTitle("Descrição completa")
+                .setMessage(descricao)
+                .setPositiveButton("Fechar", null)
+                .create()
+
+            dialog.show()
+        }
         val imageViewPOI = findViewById<ImageView>(R.id.imageViewPOI)
         val buttonRoute = findViewById<Button>(R.id.button_route)
         buttonFavorite = findViewById(R.id.button_favorite)
@@ -56,6 +68,8 @@ class PoiDetailActivity : AppCompatActivity() {
         val buttonVerComentarios = findViewById<Button>(R.id.button_ver_comentarios)
         val buttonOuvirAudio = findViewById<Button>(R.id.button_ouvir_audio)
         val audioUrl = intent.getStringExtra("audioUrl")
+        buttonEliminarPoi = findViewById(R.id.button_eliminar_poi)
+
 
 
 
@@ -145,6 +159,21 @@ class PoiDetailActivity : AppCompatActivity() {
         } else {
             buttonOuvirAudio.visibility = View.GONE
         }
+
+        if (userId != null) {
+            db.collection("Utilizadores").document(userId).get()
+                .addOnSuccessListener { document ->
+                    val tipo = document.getString("tipo")
+                    if (tipo == "admin") {
+                        buttonEliminarPoi.visibility = View.VISIBLE
+
+                        buttonEliminarPoi.setOnClickListener {
+                            eliminarPoi(nome)
+                        }
+                    }
+                }
+        }
+
 
 
     }
@@ -290,6 +319,21 @@ class PoiDetailActivity : AppCompatActivity() {
         mediaPlayer?.release()
         mediaPlayer = null
     }
+
+    private fun eliminarPoi(nome: String) {
+        db.collection("POIs").whereEqualTo("nome", nome).get()
+            .addOnSuccessListener { documents ->
+                for (doc in documents) {
+                    doc.reference.delete()
+                }
+                Toast.makeText(this, "POI eliminado com sucesso!", Toast.LENGTH_SHORT).show()
+                finish()
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Erro ao eliminar o POI!", Toast.LENGTH_SHORT).show()
+            }
+    }
+
 
 
 }

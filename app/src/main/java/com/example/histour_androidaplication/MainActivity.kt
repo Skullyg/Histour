@@ -43,6 +43,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private val poiList = mutableListOf<Poi>()
     private lateinit var searchAdapter: ArrayAdapter<String>
     private var firestoreListener: ListenerRegistration? = null
+    private var isAdmin: Boolean = false
+
 
     private val portoLocation = LatLng(41.1496, -8.6109) // 📌 Localização padrão: Porto
 
@@ -90,6 +92,20 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 }
                 loadPoisFromFirestore()
             }
+
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        currentUser?.uid?.let { uid ->
+            db.collection("Utilizadores").document(uid).get()
+                .addOnSuccessListener { document ->
+                    val tipo = document.getString("tipo")
+                    isAdmin = tipo == "admin"
+                }
+                .addOnFailureListener {
+                    Toast.makeText(this, "Erro ao verificar tipo de utilizador", Toast.LENGTH_SHORT).show()
+                }
+        }
+
+
     }
 
     override fun onMapReady(map: GoogleMap) {
@@ -125,8 +141,13 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
 
         googleMap.setOnMapClickListener { latLng ->
-            showCreatePoiDialog(latLng)
+            if (isAdmin) {
+                showCreatePoiDialog(latLng)
+            } else {
+                Toast.makeText(this, "Apenas administradores podem criar POIs.", Toast.LENGTH_SHORT).show()
+            }
         }
+
     }
 
     private fun requestLocationPermission() {
