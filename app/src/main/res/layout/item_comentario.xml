@@ -12,6 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
+        android:background="?android:attr/windowBackground"
         android:padding="16dp">
 
         <TextView
@@ -28,7 +29,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Comentário aqui"
-            android:textColor="#333333"
+            android:textColor="?android:attr/textColorPrimary"
             android:textSize="14sp"
             android:layout_marginTop="6dp" />
     </LinearLayout>

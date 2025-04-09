@@ -27,7 +27,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:padding="8dp"
-            android:background="@color/white"
+            android:background="?android:attr/windowBackground"
             android:elevation="4dp">
 
             <!-- Ícone de menu -->
@@ -46,7 +46,7 @@
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:hint="Pesquisar POIs"
-                android:background="@android:color/white"
+                android:background="?android:attr/windowBackground"
                 android:padding="10dp"
                 android:textSize="16sp"/>
 

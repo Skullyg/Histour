@@ -55,7 +55,24 @@ class EditPoiActivity : AppCompatActivity() {
         firestore = FirebaseFirestore.getInstance()
         storage = FirebaseStorage.getInstance()
 
-        val poi = intent.getParcelableExtra<Poi>("poi") ?: return
+        val nome = intent.getStringExtra("nome") ?: return
+        val descricao = intent.getStringExtra("descricao") ?: ""
+        val imagemUrl = intent.getStringExtra("imagemUrl")
+        val audioUrl = intent.getStringExtra("audioUrl")
+        val latitude = intent.getDoubleExtra("latitude", 0.0)
+        val longitude = intent.getDoubleExtra("longitude", 0.0)
+        val tipo = intent.getStringExtra("tipo") ?: "Outro"
+
+        val poi = Poi(
+            nome = nome,
+            descricao = descricao,
+            imagemUrl = imagemUrl,
+            audioUrl = audioUrl,
+            latitude = latitude,
+            longitude = longitude,
+            tipo = tipo
+        )
+
         poiId = poi.nome
         editNome.setText(poi.nome)
         editDescricao.setText(poi.descricao)

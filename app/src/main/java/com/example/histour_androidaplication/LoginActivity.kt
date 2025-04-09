@@ -7,6 +7,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
@@ -32,6 +33,7 @@ class LoginActivity : AppCompatActivity() {
         val btnEntrar = findViewById<Button>(R.id.btnEntrar)
         val textCriarConta = findViewById<TextView>(R.id.txtCriarConta)
         val btnGoogle = findViewById<ImageView>(R.id.btnGoogle)
+
 
         btnEntrar.setOnClickListener {
             val intent = Intent(this, ActivityLogin::class.java)
@@ -98,8 +100,14 @@ class LoginActivity : AppCompatActivity() {
                                 Toast.makeText(this, "Bem-vindo, ${user.displayName}!", Toast.LENGTH_SHORT).show()
 
                                 // Ir para a MainActivity depois do login bem-sucedido
+                                val tema = document.getString("tema") ?: "light"
+                                val modo = if (tema == "dark") AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
+                                AppCompatDelegate.setDefaultNightMode(modo)
+
+// Vai para MainActivity com o tema já aplicado
                                 startActivity(Intent(this, MainActivity::class.java))
-                                finish() // Fechar a LoginActivity para evitar voltar
+                                finish()
+                                // Fechar a LoginActivity para evitar voltar
                             }
                             .addOnFailureListener { e ->
                                 Toast.makeText(this, "Erro ao buscar utilizador: ${e.message}", Toast.LENGTH_LONG).show()

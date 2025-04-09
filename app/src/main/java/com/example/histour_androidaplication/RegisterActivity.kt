@@ -83,23 +83,33 @@ class RegisterActivity : AppCompatActivity() {
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
-                    val userId = auth.currentUser?.uid ?: return@addOnCompleteListener
-                    val utilizador = Utilizador(userId, nome, email, tipoConta)
+                    val user = auth.currentUser
+                    user?.sendEmailVerification()
+                        ?.addOnCompleteListener { verifyTask ->
+                            if (verifyTask.isSuccessful) {
+                                val userId = user.uid
+                                val utilizador = Utilizador(userId, nome, email, tipoConta)
 
-                    db.collection("Utilizadores").document(userId).set(utilizador)
-                        .addOnSuccessListener {
-                            Toast.makeText(this, "Conta criada com sucesso!", Toast.LENGTH_SHORT).show()
-                            val intent = Intent(this, LoginActivity::class.java)
-                            startActivity(intent)
-                            finish()
-                        }
-                        .addOnFailureListener { e ->
-                            Toast.makeText(this, "Erro ao salvar utilizador: ${e.message}", Toast.LENGTH_LONG).show()
+                                db.collection("Utilizadores").document(userId).set(utilizador)
+                                    .addOnSuccessListener {
+                                        Toast.makeText(this, "Conta criada! Verifique seu email antes de entrar.", Toast.LENGTH_LONG).show()
+                                        auth.signOut() // Força logout após registo
+                                        val intent = Intent(this, LoginActivity::class.java)
+                                        startActivity(intent)
+                                        finish()
+                                    }
+                                    .addOnFailureListener { e ->
+                                        Toast.makeText(this, "Erro ao salvar utilizador: ${e.message}", Toast.LENGTH_LONG).show()
+                                    }
+                            } else {
+                                Toast.makeText(this, "Erro ao enviar verificação de email!", Toast.LENGTH_LONG).show()
+                            }
                         }
                 } else {
                     Toast.makeText(this, "Erro ao registar: ${task.exception?.message}", Toast.LENGTH_LONG).show()
                 }
             }
+
     }
 
 

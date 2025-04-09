@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import androidx.core.content.edit
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -39,16 +40,31 @@ class SettingsActivity : AppCompatActivity() {
         // Carregar preferências de tema
         switchTheme.isChecked = sharedPreferences.getBoolean("DarkMode", false)
         switchTheme.setOnCheckedChangeListener { _, isChecked ->
-            val editor = sharedPreferences.edit()
-            editor.putBoolean("DarkMode", isChecked)
-            editor.apply()
+            sharedPreferences.edit() {
+                putBoolean("DarkMode", isChecked)
+            }
 
+            // Guarda no Firestore
+            if (user != null) {
+                val themePref = if (isChecked) "dark" else "light"
+                db.collection("Utilizadores").document(user.uid)
+                    .update("tema", themePref)
+                    .addOnSuccessListener {
+                        Toast.makeText(this, "Tema atualizado na conta!", Toast.LENGTH_SHORT).show()
+                    }
+                    .addOnFailureListener {
+                        Toast.makeText(this, "Erro ao guardar o tema na conta!", Toast.LENGTH_SHORT).show()
+                    }
+            }
+
+            // Aplica imediatamente
             if (isChecked) {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
             } else {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
             }
         }
+
 
         // Atualizar nome de utilizador
         buttonSaveUsername.setOnClickListener {
