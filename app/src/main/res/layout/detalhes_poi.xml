@@ -131,5 +131,17 @@
             android:layout_marginBottom="16dp"
             tools:ignore="HardcodedText" />
 
+        <Button
+            android:id="@+id/button_editar_poi"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Editar POI"
+            android:textColor="@android:color/white"
+            android:backgroundTint="@color/laranja_custom"
+            android:visibility="gone"
+            android:layout_marginTop="10dp"
+            android:layout_gravity="center_horizontal"/>
+
+
     </LinearLayout>
 </ScrollView>

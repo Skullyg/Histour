@@ -1,0 +1,87 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Editar Ponto de Interesse"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_gravity="center_horizontal" />
+
+        <EditText
+            android:id="@+id/editNomePoi"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Nome" />
+
+        <EditText
+            android:id="@+id/editDescricao"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Descrição"
+            android:inputType="textMultiLine"
+            android:minHeight="100dp"
+            android:scrollbars="vertical"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="edit_Tipo_do_POI"
+            android:textSize="16sp"
+            android:layout_marginTop="8dp"/>
+
+        <Spinner
+            android:id="@+id/edit_spinner_tipo_poi"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"/>
+
+        <ImageView
+            android:id="@+id/edit_image_poi"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:scaleType="centerCrop"
+            android:layout_marginBottom="12dp" />
+
+        <Button
+            android:id="@+id/btn_nova_imagem"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Selecionar Nova Imagem"
+            android:backgroundTint="@color/laranja_custom"/>
+
+        <TextView
+            android:id="@+id/selected_audio_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nenhum áudio selecionado"
+            android:layout_marginTop="8dp" />
+
+        <Button
+            android:id="@+id/btn_novo_audio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Selecionar Novo Áudio"
+            android:backgroundTint="@color/laranja_custom"
+            android:layout_marginTop="8dp" />
+
+
+
+        <Button
+            android:id="@+id/buttonSalvarAlteracoes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Guardar Alterações"
+            android:layout_marginTop="16dp"
+            android:backgroundTint="@color/laranja_custom"
+            android:textColor="@android:color/white"/>
+    </LinearLayout>
+</ScrollView>

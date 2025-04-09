@@ -69,6 +69,7 @@ class PoiDetailActivity : AppCompatActivity() {
         val buttonOuvirAudio = findViewById<Button>(R.id.button_ouvir_audio)
         val audioUrl = intent.getStringExtra("audioUrl")
         buttonEliminarPoi = findViewById(R.id.button_eliminar_poi)
+        val buttonEditarPoi = findViewById<Button>(R.id.button_editar_poi)
 
 
 
@@ -166,13 +167,31 @@ class PoiDetailActivity : AppCompatActivity() {
                     val tipo = document.getString("tipo")
                     if (tipo == "admin") {
                         buttonEliminarPoi.visibility = View.VISIBLE
+                        buttonEditarPoi.visibility = View.VISIBLE
 
                         buttonEliminarPoi.setOnClickListener {
                             eliminarPoi(nome)
                         }
+
+                        buttonEditarPoi.setOnClickListener {
+                            val intent = Intent(this, EditPoiActivity::class.java).apply {
+                                putExtra("nome", nome)
+                                putExtra("descricao", descricao)
+                                putExtra("imagemUrl", imagemUrl)
+                                putExtra("latitude", latitude)
+                                putExtra("longitude", longitude)
+                                putExtra("tipo", tipo)
+                                putExtra("audioUrl", audioUrl)
+                            }
+                            startActivity(intent)
+                        }
+
+
                     }
                 }
         }
+
+
 
 
 

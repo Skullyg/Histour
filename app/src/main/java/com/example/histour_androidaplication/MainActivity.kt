@@ -39,7 +39,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private val db = FirebaseFirestore.getInstance()
     private var currentLocation: LatLng? = null
-    private val CREATE_POI_REQUEST = 1
+    private val cREATEPOIREQUEST = 1
     private val poiList = mutableListOf<Poi>()
     private lateinit var searchAdapter: ArrayAdapter<String>
     private var firestoreListener: ListenerRegistration? = null
@@ -231,7 +231,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             val intent = Intent(this, CreatePoiActivity::class.java)
             intent.putExtra("latitude", latLng.latitude)
             intent.putExtra("longitude", latLng.longitude)
-            startActivityForResult(intent, CREATE_POI_REQUEST)
+            startActivityForResult(intent, cREATEPOIREQUEST)
         }
 
         builder.setNegativeButton("Cancelar") { dialog, _ -> dialog.dismiss() }
