@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="20dp"
-    android:background="@android:color/white">
+    android:background="?android:attr/windowBackground">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -26,14 +26,15 @@
         <!-- Nome -->
         <TextView
             android:id="@+id/textNome"
-            android:layout_width="match_parent"
+            android:layout_width="160dp"
             android:layout_height="wrap_content"
-            android:text="Nome do POI"
-            android:textSize="24sp"
-            android:textStyle="bold"
+            android:layout_marginBottom="8dp"
+            android:background="@color/white"
             android:gravity="center"
+            android:text="Nome do POI"
             android:textColor="@android:color/black"
-            android:layout_marginBottom="8dp" />
+            android:textSize="24sp"
+            android:textStyle="bold" />
 
         <!-- Tipo -->
         <TextView

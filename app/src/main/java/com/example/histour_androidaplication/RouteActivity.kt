@@ -39,6 +39,8 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
     companion object {
         val PATTERN_DASHED: List<PatternItem> = listOf(Dash(30f), Gap(20f))
     }
+    private val drawnPolylines = mutableListOf<com.google.android.gms.maps.model.Polyline>()
+
 
 
 
@@ -82,6 +84,30 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
             Toast.makeText(this, "Erro ao obter a localização.", Toast.LENGTH_LONG).show()
             finish()
             return
+        }
+
+        travelTimeCar.setOnClickListener {
+            clearRoutes()
+            if (poiList.size > 2)
+                getMultiStopRoute("driving", Color.RED, travelTimeCar)
+            else
+                getRoute("driving", Color.RED, travelTimeCar)
+        }
+
+        travelTimeWalk.setOnClickListener {
+            clearRoutes()
+            if (poiList.size > 2)
+                getMultiStopRoute("walking", Color.BLUE, travelTimeWalk)
+            else
+                getRoute("walking", Color.BLUE, travelTimeWalk)
+        }
+
+        travelTimeTransit.setOnClickListener {
+            clearRoutes()
+            if (poiList.size > 2)
+                getMultiStopRoute("transit", Color.GREEN, travelTimeTransit)
+            else
+                getRoute("transit", Color.GREEN, travelTimeTransit)
         }
 
 
@@ -199,27 +225,26 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
 
     // 🔹 ✅ Agora a função drawRoute EXISTE e não dará erro!
     private fun drawRoute(encodedPolyline: String, color: Int, mode: String) {
-        Log.d("RouteActivity", "Desenhando rota no mapa...")
         val decodedPath = decodePolyline(encodedPolyline)
         val polylineOptions = PolylineOptions()
             .addAll(decodedPath)
-            .width(if (mode == "walking") 10f else 12f) // A pé mais fino
+            .width(if (mode == "walking") 10f else 12f)
             .color(color)
 
         if (mode == "walking") {
             polylineOptions.pattern(PATTERN_DASHED)
         }
 
+        val polyline = googleMap.addPolyline(polylineOptions)
+        drawnPolylines.add(polyline)
 
-        googleMap.addPolyline(polylineOptions)
-
-        // Ajustar câmera para visualizar toda a rota
         val boundsBuilder = com.google.android.gms.maps.model.LatLngBounds.Builder()
         for (point in decodedPath) {
             boundsBuilder.include(point)
         }
         googleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(boundsBuilder.build(), 100))
     }
+
 
     // 🔹 ✅ Agora a função decodePolyline EXISTE e não dará erro!
     private fun decodePolyline(encoded: String): List<LatLng> {
@@ -256,4 +281,13 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
         }
         return poly
     }
+
+    private fun clearRoutes() {
+        for (polyline in drawnPolylines) {
+            polyline.remove()
+        }
+        drawnPolylines.clear()
+    }
+
 }
+

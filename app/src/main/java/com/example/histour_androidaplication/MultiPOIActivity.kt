@@ -3,6 +3,7 @@ package com.example.histour_androidaplication
 import android.graphics.Color
 import android.os.Bundle
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.histour_androidaplication.models.Poi
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -26,6 +27,10 @@ class MultiPOIActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var googleMap: GoogleMap
     private var selectedPOIs: List<Poi> = listOf()
+    private var polylineCar: PolylineOptions? = null
+    private var polylineWalk: PolylineOptions? = null
+    private var polylineTransit: PolylineOptions? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,23 +44,43 @@ class MultiPOIActivity : AppCompatActivity(), OnMapReadyCallback {
         if (selectedPOIs.size >= 2) {
             obterRotasTodosPOIs(selectedPOIs, "driving") { linha, duracao ->
                 runOnUiThread {
-                    linha?.let { googleMap.addPolyline(it) }
+                    linha?.let {
+                        polylineCar = it                 // <- Salva a linha
+                        googleMap.addPolyline(it)
+                    }
                     findViewById<TextView>(R.id.travel_time_car).text = "Carro: $duracao"
                 }
             }
 
             obterRotasTodosPOIs(selectedPOIs, "walking") { linha, duracao ->
                 runOnUiThread {
-                    linha?.let { googleMap.addPolyline(it) }
+                    linha?.let {
+                        polylineWalk = it               // <- Salva a linha
+                        googleMap.addPolyline(it)
+                    }
                     findViewById<TextView>(R.id.travel_time_walk).text = "A pé: $duracao"
                 }
             }
 
             obterRotasTodosPOIs(selectedPOIs, "transit") { linha, duracao ->
                 runOnUiThread {
-                    linha?.let { googleMap.addPolyline(it) }
+                    linha?.let {
+                        polylineTransit = it            // <- Salva a linha
+                        googleMap.addPolyline(it)
+                    }
                     findViewById<TextView>(R.id.travel_time_transit).text = "Transportes: $duracao"
                 }
+            }
+
+
+            findViewById<TextView>(R.id.travel_time_car).setOnClickListener {
+                mostrarSomenteRota(polylineCar)
+            }
+            findViewById<TextView>(R.id.travel_time_walk).setOnClickListener {
+                mostrarSomenteRota(polylineWalk)
+            }
+            findViewById<TextView>(R.id.travel_time_transit).setOnClickListener {
+                mostrarSomenteRota(polylineTransit)
             }
         }
 
@@ -108,8 +133,9 @@ class MultiPOIActivity : AppCompatActivity(), OnMapReadyCallback {
         url.append("origin=$origem")
         url.append("&destination=$destino")
         if (waypoints.isNotEmpty()) {
-            url.append("&waypoints=$waypoints")
+            url.append("&waypoints=optimize:true|$waypoints")
         }
+
         url.append("&mode=$modo")
         url.append("&key=$apiKey")
 
@@ -165,6 +191,46 @@ class MultiPOIActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         })
     }
+
+    private fun mostrarSomenteRota(polylineOptions: PolylineOptions?) {
+        googleMap.clear()
+
+        // Reposicionar os marcadores
+        val coresMarcadores = listOf(
+            BitmapDescriptorFactory.HUE_ORANGE,
+            BitmapDescriptorFactory.HUE_AZURE,
+            BitmapDescriptorFactory.HUE_GREEN,
+            BitmapDescriptorFactory.HUE_RED,
+            BitmapDescriptorFactory.HUE_CYAN,
+            BitmapDescriptorFactory.HUE_MAGENTA,
+            BitmapDescriptorFactory.HUE_ROSE,
+            BitmapDescriptorFactory.HUE_YELLOW,
+            BitmapDescriptorFactory.HUE_VIOLET
+        )
+
+        selectedPOIs.forEachIndexed { index, poi ->
+            val location = LatLng(poi.latitude, poi.longitude)
+            val cor = coresMarcadores.getOrElse(index) { BitmapDescriptorFactory.HUE_BLUE }
+
+            googleMap.addMarker(
+                MarkerOptions()
+                    .position(location)
+                    .title(poi.nome)
+                    .icon(BitmapDescriptorFactory.defaultMarker(cor))
+            )
+        }
+
+        // Mostra a rota se estiver carregada
+        if (polylineOptions != null) {
+            googleMap.addPolyline(polylineOptions)
+        } else {
+            // Mensagem temporária para debug
+            runOnUiThread {
+                Toast.makeText(this, "A rota ainda está a ser carregada. Tenta novamente em alguns segundos.", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
 
 }
 
