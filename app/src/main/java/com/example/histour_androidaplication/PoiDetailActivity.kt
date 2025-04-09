@@ -178,12 +178,13 @@ class PoiDetailActivity : AppCompatActivity() {
                                 putExtra("nome", nome)
                                 putExtra("descricao", descricao)
                                 putExtra("imagemUrl", imagemUrl)
+                                putExtra("audioUrl", audioUrl)
                                 putExtra("latitude", latitude)
                                 putExtra("longitude", longitude)
                                 putExtra("tipo", tipo)
-                                putExtra("audioUrl", audioUrl)
                             }
-                            startActivity(intent)
+                            startActivityForResult(intent, 123)
+
                         }
 
 
@@ -353,6 +354,30 @@ class PoiDetailActivity : AppCompatActivity() {
             }
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 123 && resultCode == RESULT_OK && data != null) {
+            val novoNome = data.getStringExtra("nome")
+            val novaDescricao = data.getStringExtra("descricao")
+            val novaImagemUrl = data.getStringExtra("imagemUrl")
+            val novoAudioUrl = data.getStringExtra("audioUrl")
+            val novoTipo = data.getStringExtra("tipo")
+
+            // Atualizar os dados na UI
+            findViewById<TextView>(R.id.textNome).text = novoNome
+            findViewById<TextView>(R.id.textDescricao).text = novaDescricao
+            findViewById<TextView>(R.id.textTipo).text = getString(R.string.tipo_label, novoTipo)
+
+            if (!novaImagemUrl.isNullOrEmpty()) {
+                Glide.with(this).load(novaImagemUrl).into(findViewById(R.id.imageViewPOI))
+            }
+
+            // Atualiza o botão de áudio se necessário
+            if (!novoAudioUrl.isNullOrEmpty()) {
+                findViewById<Button>(R.id.button_ouvir_audio).visibility = View.VISIBLE
+            }
+        }
+    }
 
 
 }

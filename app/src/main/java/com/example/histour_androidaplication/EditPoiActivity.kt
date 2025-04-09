@@ -132,7 +132,10 @@ class EditPoiActivity : AppCompatActivity() {
             return
         }
 
-        val poiRef = firestore.collection("POIs").document(poiOriginal.nome)
+        val nomeAntigo = poiOriginal.nome
+        val poiRefNovo = firestore.collection("POIs").document(nome)
+        val poiRefAntigo = firestore.collection("POIs").document(nomeAntigo)
+
 
         if (novaImagemUri != null) {
             // Apagar imagem antiga se existir
@@ -145,17 +148,18 @@ class EditPoiActivity : AppCompatActivity() {
                     poiImagemUrl = uri.toString()
                     if (novoAudioUri != null) {
                         poiAudioUrl?.let { apagarFicheiroStorage(it) } // Apagar áudio antigo
-                        uploadAudio(poiRef, nome, descricao, tipo)
+                        uploadAudio(poiRefNovo, nome, descricao, tipo)
                     } else {
-                        salvarNoFirestore(poiRef, nome, descricao, tipo)
+                        salvarNoFirestore(poiRefNovo, nome, descricao, tipo)
                     }
                 }
         } else if (novoAudioUri != null) {
             poiAudioUrl?.let { apagarFicheiroStorage(it) } // Apagar áudio antigo
-            uploadAudio(poiRef, nome, descricao, tipo)
+            uploadAudio(poiRefNovo, nome, descricao, tipo)
         } else {
-            salvarNoFirestore(poiRef, nome, descricao, tipo)
+            salvarNoFirestore(poiRefNovo, nome, descricao, tipo)
         }
+
     }
 
     private fun uploadAudio(
@@ -174,7 +178,7 @@ class EditPoiActivity : AppCompatActivity() {
     }
 
     private fun salvarNoFirestore(
-        poiRef: com.google.firebase.firestore.DocumentReference,
+        poiRefNovo: com.google.firebase.firestore.DocumentReference,
         nome: String,
         descricao: String,
         tipo: String
@@ -184,18 +188,95 @@ class EditPoiActivity : AppCompatActivity() {
             "descricao" to descricao,
             "tipo" to tipo,
             "imagemUrl" to poiImagemUrl,
-            "audioUrl" to poiAudioUrl
+            "audioUrl" to poiAudioUrl,
+            "latitude" to intent.getDoubleExtra("latitude", 0.0),
+            "longitude" to intent.getDoubleExtra("longitude", 0.0)
         )
 
-        poiRef.update(updates)
-            .addOnSuccessListener {
-                Toast.makeText(this, "POI atualizado com sucesso!", Toast.LENGTH_SHORT).show()
-                finish()
-            }
-            .addOnFailureListener {
-                Toast.makeText(this, "Erro ao atualizar POI!", Toast.LENGTH_SHORT).show()
-            }
+        val nomeAntigo = intent.getStringExtra("nome") ?: return
+        val poiRefAntigo = firestore.collection("POIs").document(nomeAntigo)
+
+        // Se o nome mudou, cria novo e apaga o antigo
+        if (nome != nomeAntigo) {
+            poiRefNovo.set(updates)
+                .addOnSuccessListener {
+                    poiRefAntigo.delete()
+                    Toast.makeText(this, "POI atualizado com novo nome!", Toast.LENGTH_SHORT).show()
+                    val resultIntent = Intent().apply {
+                        putExtra("nome", nome)
+                        putExtra("descricao", descricao)
+                        putExtra("imagemUrl", poiImagemUrl)
+                        putExtra("audioUrl", poiAudioUrl)
+                        putExtra("tipo", tipo)
+                    }
+                    setResult(Activity.RESULT_OK, resultIntent)
+
+                    finish()
+                }
+                .addOnFailureListener {
+                    Toast.makeText(this, "Erro ao atualizar POI!", Toast.LENGTH_SHORT).show()
+                }
+        } else {
+            poiRefNovo.update(updates)
+                .addOnSuccessListener {
+                    Toast.makeText(this, "POI atualizado com sucesso!", Toast.LENGTH_SHORT).show()
+                    atualizarReferenciasUtilizador(nomeAntigo, nome)
+                    val resultIntent = Intent().apply {
+                        putExtra("nome", nome)
+                        putExtra("descricao", descricao)
+                        putExtra("imagemUrl", poiImagemUrl)
+                        putExtra("audioUrl", poiAudioUrl)
+                        putExtra("tipo", tipo)
+                    }
+                    setResult(Activity.RESULT_OK, resultIntent)
+
+                    finish()
+                }
+                .addOnFailureListener {
+                    Toast.makeText(this, "Erro ao atualizar POI!", Toast.LENGTH_SHORT).show()
+                }
+        }
+
     }
+
+    private fun atualizarReferenciasUtilizador(nomeAntigo: String, nomeNovo: String) {
+        val utilizadoresRef = firestore.collection("Utilizadores")
+        utilizadoresRef.get().addOnSuccessListener { result ->
+            for (userDoc in result) {
+                val uid = userDoc.id
+
+                // Atualizar nos Favoritos
+                val favoritoRef = utilizadoresRef.document(uid).collection("Favoritos").document(nomeAntigo)
+                favoritoRef.get().addOnSuccessListener { doc ->
+                    if (doc.exists()) {
+                        val dados = doc.data
+                        if (dados != null) {
+                            val novoDados = HashMap(dados)
+                            novoDados["nome"] = nomeNovo
+                            utilizadoresRef.document(uid).collection("Favoritos").document(nomeNovo).set(novoDados)
+                            favoritoRef.delete()
+                        }
+                    }
+                }
+
+                // Atualizar nas Visitas
+                val visitaRef = utilizadoresRef.document(uid).collection("Visitas").document(nomeAntigo)
+                visitaRef.get().addOnSuccessListener { doc ->
+                    if (doc.exists()) {
+                        val dados = doc.data
+                        if (dados != null) {
+                            val novoDados = HashMap(dados)
+                            novoDados["nome"] = nomeNovo
+                            utilizadoresRef.document(uid).collection("Visitas").document(nomeNovo).set(novoDados)
+                            visitaRef.delete()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
 
     private fun apagarFicheiroStorage(url: String) {
         val ref = storage.getReferenceFromUrl(url)
