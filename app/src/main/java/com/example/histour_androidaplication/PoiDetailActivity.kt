@@ -21,6 +21,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlin.jvm.java
 import android.media.MediaPlayer
 import android.net.Uri
+import java.io.File
 
 class PoiDetailActivity : AppCompatActivity() {
 
@@ -41,9 +42,11 @@ class PoiDetailActivity : AppCompatActivity() {
 
         val nome = intent.getStringExtra("nome") ?: "Nome desconhecido"
         val descricao = intent.getStringExtra("descricao") ?: "Sem descrição"
-        val imagemUrl = intent.getStringExtra("imagemUrl") ?: ""
         val latitude = intent.getDoubleExtra("latitude", 0.0)
         val longitude = intent.getDoubleExtra("longitude", 0.0)
+        val imagemBase64 = intent.getStringExtra("imagemBase64")
+        val audioBase64 = intent.getStringExtra("audioBase64")
+
 
         val textNome = findViewById<TextView>(R.id.textNome)
         val textDescricao = findViewById<TextView>(R.id.textDescricao)
@@ -67,7 +70,6 @@ class PoiDetailActivity : AppCompatActivity() {
         val buttonComentar = findViewById<Button>(R.id.button_comentar)
         val buttonVerComentarios = findViewById<Button>(R.id.button_ver_comentarios)
         val buttonOuvirAudio = findViewById<Button>(R.id.button_ouvir_audio)
-        val audioUrl = intent.getStringExtra("audioUrl")
         buttonEliminarPoi = findViewById(R.id.button_eliminar_poi)
         val buttonEditarPoi = findViewById<Button>(R.id.button_editar_poi)
 
@@ -78,11 +80,14 @@ class PoiDetailActivity : AppCompatActivity() {
         textDescricao.text = descricao
 
         // Carregar a imagem com Glide
-        if (imagemUrl.isNotEmpty()) {
-            Glide.with(this).load(imagemUrl).into(imageViewPOI)
+        if (!imagemBase64.isNullOrEmpty()) {
+            val imageBytes = android.util.Base64.decode(imagemBase64, android.util.Base64.DEFAULT)
+            val bitmap = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+            imageViewPOI.setImageBitmap(bitmap)
         } else {
             imageViewPOI.setImageResource(R.drawable.ic_launcher_background)
         }
+
 
         // Obter a localização do utilizador
         getUserLocation()
@@ -115,14 +120,15 @@ class PoiDetailActivity : AppCompatActivity() {
 
         checkIfFavorite(nome)
         buttonFavorite.setOnClickListener {
-            toggleFavorite(nome, descricao, latitude, longitude, imagemUrl)
+            toggleFavorite(nome, descricao, latitude, longitude, imagemBase64 ?: "")
         }
 
         verificarSeVisitado(nome, buttonVisited)
 
 
         buttonVisited.setOnClickListener {
-            marcarComoVisitado(nome, descricao, latitude, longitude, imagemUrl, buttonVisited)
+            marcarComoVisitado(nome, descricao, latitude, longitude, imagemBase64 ?: "", buttonVisited)
+
         }
 
 
@@ -138,11 +144,15 @@ class PoiDetailActivity : AppCompatActivity() {
             intent.putExtra("poi_nome", nome)
             startActivity(intent)
         }
-        if (!audioUrl.isNullOrEmpty()) {
+        if (!audioBase64.isNullOrEmpty()) {
+            val audioBytes = android.util.Base64.decode(audioBase64, android.util.Base64.DEFAULT)
+            val tempAudio = File.createTempFile("temp_audio", ".mp3", cacheDir)
+            tempAudio.writeBytes(audioBytes)
+
             buttonOuvirAudio.setOnClickListener {
                 if (mediaPlayer == null) {
                     mediaPlayer = MediaPlayer().apply {
-                        setDataSource(audioUrl)
+                        setDataSource(tempAudio.absolutePath)
                         prepare()
                         start()
                     }
@@ -161,6 +171,7 @@ class PoiDetailActivity : AppCompatActivity() {
             buttonOuvirAudio.visibility = View.GONE
         }
 
+
         if (userId != null) {
             db.collection("Utilizadores").document(userId).get()
                 .addOnSuccessListener { document ->
@@ -177,8 +188,8 @@ class PoiDetailActivity : AppCompatActivity() {
                             val intent = Intent(this, EditPoiActivity::class.java).apply {
                                 putExtra("nome", nome)
                                 putExtra("descricao", descricao)
-                                putExtra("imagemUrl", imagemUrl)
-                                putExtra("audioUrl", audioUrl)
+                                putExtra("imagemBase64", imagemBase64)
+                                putExtra("audioBase64", audioBase64)
                                 putExtra("latitude", latitude)
                                 putExtra("longitude", longitude)
                                 putExtra("tipo", tipo)
@@ -357,27 +368,48 @@ class PoiDetailActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == 123 && resultCode == RESULT_OK && data != null) {
-            val novoNome = data.getStringExtra("nome")
-            val novaDescricao = data.getStringExtra("descricao")
-            val novaImagemUrl = data.getStringExtra("imagemUrl")
-            val novoAudioUrl = data.getStringExtra("audioUrl")
-            val novoTipo = data.getStringExtra("tipo")
+            val novoNome = data.getStringExtra("nome") ?: ""
+            val novaDescricao = data.getStringExtra("descricao") ?: ""
+            val novaImagemBase64 = data.getStringExtra("imagemBase64")
+            val novoAudioBase64 = data.getStringExtra("audioBase64")
+            val novoTipo = data.getStringExtra("tipo") ?: "Outro"
 
-            // Atualizar os dados na UI
             findViewById<TextView>(R.id.textNome).text = novoNome
             findViewById<TextView>(R.id.textDescricao).text = novaDescricao
             findViewById<TextView>(R.id.textTipo).text = getString(R.string.tipo_label, novoTipo)
 
-            if (!novaImagemUrl.isNullOrEmpty()) {
-                Glide.with(this).load(novaImagemUrl).into(findViewById(R.id.imageViewPOI))
+            if (!novaImagemBase64.isNullOrEmpty()) {
+                val imageBytes = android.util.Base64.decode(novaImagemBase64, android.util.Base64.DEFAULT)
+                val bitmap = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                findViewById<ImageView>(R.id.imageViewPOI).setImageBitmap(bitmap)
             }
 
-            // Atualiza o botão de áudio se necessário
-            if (!novoAudioUrl.isNullOrEmpty()) {
-                findViewById<Button>(R.id.button_ouvir_audio).visibility = View.VISIBLE
+            if (!novoAudioBase64.isNullOrEmpty()) {
+                val audioBytes = android.util.Base64.decode(novoAudioBase64, android.util.Base64.DEFAULT)
+                val tempAudio = File.createTempFile("temp_audio", ".mp3", cacheDir)
+                tempAudio.writeBytes(audioBytes)
+
+                val btnOuvir = findViewById<Button>(R.id.button_ouvir_audio)
+                btnOuvir.visibility = View.VISIBLE
+                btnOuvir.setOnClickListener {
+                    if (mediaPlayer == null) {
+                        mediaPlayer = MediaPlayer().apply {
+                            setDataSource(tempAudio.absolutePath)
+                            prepare()
+                            start()
+                        }
+                    } else {
+                        if (mediaPlayer!!.isPlaying) {
+                            mediaPlayer!!.pause()
+                        } else {
+                            mediaPlayer!!.start()
+                        }
+                    }
+                }
             }
         }
     }
+
 
 
 }

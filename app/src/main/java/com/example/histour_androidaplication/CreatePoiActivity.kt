@@ -11,7 +11,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.histour_androidaplication.models.Poi
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
 import java.util.UUID
 
 class CreatePoiActivity : AppCompatActivity() {
@@ -29,7 +28,14 @@ class CreatePoiActivity : AppCompatActivity() {
 
     private var imageUri: Uri? = null
     private val db = FirebaseFirestore.getInstance()
-    private val storage = FirebaseStorage.getInstance()
+    private fun uriToBase64(uri: Uri): String? {
+        return contentResolver.openInputStream(uri)?.use { inputStream ->
+            val bytes = inputStream.readBytes()
+            android.util.Base64.encodeToString(bytes, android.util.Base64.DEFAULT)
+        }
+    }
+
+
 
     private var latitude: Double = 0.0
     private var longitude: Double = 0.0
@@ -77,14 +83,38 @@ class CreatePoiActivity : AppCompatActivity() {
         }
 
         btnGuardarPoi.setOnClickListener {
-            if (imageUri != null) {
-                uploadImageAndAudioThenSavePoi()
-            } else if (audioUri != null) {
-                uploadAudioThenSavePoi("")
-            } else {
-                savePoiToFirestore("", "")
+            val nome = editTextNome.text.toString().trim()
+            val descricao = editTextDescricao.text.toString().trim()
+            val tipoPoi = spinnerTipoPoi.selectedItem.toString()
+
+            if (nome.isEmpty() || descricao.isEmpty()) {
+                Toast.makeText(this, "Preencha todos os campos!", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
             }
+
+            val imagemBase64 = imageUri?.let { uriToBase64(it) }
+            val audioBase64 = audioUri?.let { uriToBase64(it) }
+
+            val poi = Poi(
+                nome = nome,
+                descricao = descricao,
+                latitude = latitude,
+                longitude = longitude,
+                imagemBase64 = imagemBase64,
+                tipo = tipoPoi,
+                audioBase64 = audioBase64
+            )
+
+            db.collection("POIs").add(poi)
+                .addOnSuccessListener {
+                    Toast.makeText(this, "POI criado com sucesso!", Toast.LENGTH_SHORT).show()
+                    finish()
+                }
+                .addOnFailureListener {
+                    Toast.makeText(this, "Erro ao guardar o POI!", Toast.LENGTH_SHORT).show()
+                }
         }
+
 
     }
 
@@ -99,58 +129,5 @@ class CreatePoiActivity : AppCompatActivity() {
             audioUri = data.data
             Toast.makeText(this, "Áudio selecionado com sucesso!", Toast.LENGTH_SHORT).show()
         }
-    }
-
-    private fun uploadImageAndAudioThenSavePoi() {
-        val imageRef = storage.reference.child("pois/${UUID.randomUUID()}.jpg")
-        imageRef.putFile(imageUri!!)
-            .addOnSuccessListener {
-                imageRef.downloadUrl.addOnSuccessListener { imageUrl ->
-                    if (audioUri != null) {
-                        uploadAudioThenSavePoi(imageUrl.toString())
-                    } else {
-                        savePoiToFirestore(imageUrl.toString(), "")
-                    }
-                }
-            }
-            .addOnFailureListener {
-                Toast.makeText(this, "Erro ao carregar imagem", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    private fun uploadAudioThenSavePoi(imageUrl: String) {
-        val audioRef = storage.reference.child("audios/${UUID.randomUUID()}.mp3")
-        audioRef.putFile(audioUri!!)
-            .addOnSuccessListener {
-                audioRef.downloadUrl.addOnSuccessListener { audioUrl ->
-                    savePoiToFirestore(imageUrl, audioUrl.toString())
-                }
-            }
-            .addOnFailureListener {
-                Toast.makeText(this, "Erro ao carregar áudio", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-
-    private fun savePoiToFirestore(imageUrl: String, audioUrl: String) {
-        val nome = editTextNome.text.toString().trim()
-        val descricao = editTextDescricao.text.toString().trim()
-        val tipoPoi = spinnerTipoPoi.selectedItem.toString()
-
-        if (nome.isEmpty() || descricao.isEmpty()) {
-            Toast.makeText(this, "Preencha todos os campos!", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val poi = Poi(nome, descricao, latitude, longitude, imagemUrl = imageUrl, tipo = tipoPoi)
-
-        db.collection("POIs").add(poi)
-            .addOnSuccessListener {
-                Toast.makeText(this, "POI criado com sucesso!", Toast.LENGTH_SHORT).show()
-                finish()
-            }
-            .addOnFailureListener {
-                Toast.makeText(this, "Erro ao guardar o POI!", Toast.LENGTH_SHORT).show()
-            }
     }
 }

@@ -9,7 +9,7 @@ data class Poi(
     val descricao: String = "",
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
-    val imagemUrl: String? = null,
     val tipo: String = "Outro",
-    val audioUrl: String? = null
+    val imagemBase64: String? = null,
+    val audioBase64: String? = null
 ) : Parcelable
