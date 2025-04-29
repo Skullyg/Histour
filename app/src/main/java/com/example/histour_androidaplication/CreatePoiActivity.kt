@@ -11,7 +11,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.histour_androidaplication.models.Poi
 import com.google.firebase.firestore.FirebaseFirestore
-import java.util.UUID
 
 class CreatePoiActivity : AppCompatActivity() {
 
@@ -23,7 +22,7 @@ class CreatePoiActivity : AppCompatActivity() {
     private lateinit var imgPreview: ImageView
     private lateinit var btnSelectAudio: Button
     private var audioUri: Uri? = null
-    private val AUDIO_PICK_CODE = 101
+    private val aUDIOPICKCODE = 101
 
 
     private var imageUri: Uri? = null
@@ -79,7 +78,7 @@ class CreatePoiActivity : AppCompatActivity() {
         btnSelectAudio.setOnClickListener {
             val intent = Intent(Intent.ACTION_GET_CONTENT)
             intent.type = "audio/*"
-            startActivityForResult(intent, AUDIO_PICK_CODE)
+            startActivityForResult(intent, aUDIOPICKCODE)
         }
 
         btnGuardarPoi.setOnClickListener {
@@ -125,7 +124,7 @@ class CreatePoiActivity : AppCompatActivity() {
             imageUri = data.data
             imgPreview.setImageURI(imageUri)
         }
-        else if (requestCode == AUDIO_PICK_CODE && resultCode == Activity.RESULT_OK && data != null) {
+        else if (requestCode == aUDIOPICKCODE && resultCode == Activity.RESULT_OK && data != null) {
             audioUri = data.data
             Toast.makeText(this, "Áudio selecionado com sucesso!", Toast.LENGTH_SHORT).show()
         }
