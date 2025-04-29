@@ -36,7 +36,7 @@ class FavoritesActivity : AppCompatActivity() {  // ✅ Sem construtor
             intent.putExtra("descricao", poi.descricao)
             intent.putExtra("latitude", poi.latitude)
             intent.putExtra("longitude", poi.longitude)
-            intent.putExtra("imagemUrl", poi.imagemUrl)
+            intent.putExtra("imagemUrl", poi.imagemBase64)
             startActivity(intent)
         }
     }

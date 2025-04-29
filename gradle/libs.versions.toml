@@ -1,5 +1,5 @@
 [versions]
-agp = "8.8.2"
+agp = "8.9.2"
 androidMapsUtils = "2.3.0"
 androidMapsUtilsVersion = "2.2.3"
 compiler = "4.15.1"

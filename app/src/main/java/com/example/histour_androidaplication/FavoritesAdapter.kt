@@ -27,11 +27,14 @@ class FavoritesAdapter(private val context: Context, private val favoritos: List
 
         textNome.text = poi.nome
 
-        if (!poi.imagemUrl.isNullOrEmpty()) {
-            Glide.with(context).load(poi.imagemUrl).into(imageView)
+        if (!poi.imagemBase64.isNullOrEmpty()) {
+            val imageBytes = android.util.Base64.decode(poi.imagemBase64, android.util.Base64.DEFAULT)
+            val bitmap = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+            imageView.setImageBitmap(bitmap)
         } else {
             imageView.setImageResource(R.drawable.ic_launcher_background)
         }
+
 
         // Remover favorito ao clicar no ícone
         view.findViewById<ImageView>(R.id.buttonRemoveFavorite).setOnClickListener {

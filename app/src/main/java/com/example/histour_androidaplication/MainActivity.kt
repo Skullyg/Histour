@@ -130,8 +130,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 intent.putExtra("descricao", poi.descricao)
                 intent.putExtra("latitude", poi.latitude)
                 intent.putExtra("longitude", poi.longitude)
-                intent.putExtra("imagemUrl", poi.imagemUrl ?: "")
-                intent.putExtra("tipo", poi.tipo)  // ✅ Adiciona esta linha!
+                intent.putExtra("imagemBase64", poi.imagemBase64 ?: "")
+                intent.putExtra("tipo", poi.tipo)// ✅ Adiciona esta linha!
 
                 startActivity(intent)
                 true
