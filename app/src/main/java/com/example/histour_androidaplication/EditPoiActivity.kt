@@ -4,13 +4,10 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import com.bumptech.glide.Glide
 import com.example.histour_androidaplication.models.Poi
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
 import java.util.*
 
 class EditPoiActivity : AppCompatActivity() {
@@ -25,11 +22,8 @@ class EditPoiActivity : AppCompatActivity() {
     private lateinit var audioText: TextView
 
     private lateinit var firestore: FirebaseFirestore
-    private lateinit var storage: FirebaseStorage
 
     private var poiId: String = ""
-    private var poiImagemUrl: String? = null
-    private var poiAudioUrl: String? = null
 
     private var novaImagemUri: Uri? = null
     private var novoAudioUri: Uri? = null
@@ -53,12 +47,11 @@ class EditPoiActivity : AppCompatActivity() {
         audioText = findViewById(R.id.selected_audio_name)
 
         firestore = FirebaseFirestore.getInstance()
-        storage = FirebaseStorage.getInstance()
 
         val nome = intent.getStringExtra("nome") ?: return
         val descricao = intent.getStringExtra("descricao") ?: ""
-        val imagemUrl = intent.getStringExtra("imagemUrl")
-        val audioUrl = intent.getStringExtra("audioUrl")
+        val imagemBase64 = intent.getStringExtra("imagemBase64")
+        val audioBase64 = intent.getStringExtra("audioBase64")
         val latitude = intent.getDoubleExtra("latitude", 0.0)
         val longitude = intent.getDoubleExtra("longitude", 0.0)
         val tipo = intent.getStringExtra("tipo") ?: "Outro"
@@ -66,21 +59,24 @@ class EditPoiActivity : AppCompatActivity() {
         val poi = Poi(
             nome = nome,
             descricao = descricao,
-            imagemUrl = imagemUrl,
-            audioUrl = audioUrl,
+            imagemBase64 = imagemBase64,
+            audioBase64 = audioBase64,
             latitude = latitude,
             longitude = longitude,
             tipo = tipo
         )
 
+
         poiId = poi.nome
         editNome.setText(poi.nome)
         editDescricao.setText(poi.descricao)
-        poiImagemUrl = poi.imagemUrl
-        poiAudioUrl = poi.audioUrl
+        poi.imagemBase64?.let {
+            val imageBytes = android.util.Base64.decode(it, android.util.Base64.DEFAULT)
+            val bitmap = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+            imageView.setImageBitmap(bitmap)
+        }
 
-        Glide.with(this).load(poiImagemUrl).into(imageView)
-        audioText.text = if (poiAudioUrl != null) "Áudio existente" else "Nenhum áudio selecionado"
+        audioText.text = if (!poi.audioBase64.isNullOrEmpty()) "Áudio existente" else "Nenhum áudio selecionado"
 
         // Spinner
         val tiposPoi = arrayOf("Museu", "Monumento Histórico", "Praça", "Outro")
@@ -122,6 +118,13 @@ class EditPoiActivity : AppCompatActivity() {
         }
     }
 
+    private fun uriToBase64(uri: Uri): String? {
+        return contentResolver.openInputStream(uri)?.use { inputStream ->
+            val bytes = inputStream.readBytes()
+            android.util.Base64.encodeToString(bytes, android.util.Base64.DEFAULT)
+        }
+    }
+
     private fun guardarAlteracoes(poiOriginal: Poi) {
         val nome = editNome.text.toString().trim()
         val descricao = editDescricao.text.toString().trim()
@@ -132,111 +135,55 @@ class EditPoiActivity : AppCompatActivity() {
             return
         }
 
-        val nomeAntigo = poiOriginal.nome
-        val poiRefNovo = firestore.collection("POIs").document(nome)
-        val poiRefAntigo = firestore.collection("POIs").document(nomeAntigo)
+        val imagemBase64 = novaImagemUri?.let { uriToBase64(it) } ?: poiOriginal.imagemBase64
+        val audioBase64 = novoAudioUri?.let { uriToBase64(it) } ?: poiOriginal.audioBase64
 
-
-        if (novaImagemUri != null) {
-            // Apagar imagem antiga se existir
-            poiImagemUrl?.let { apagarFicheiroStorage(it) }
-
-            val imagemRef = storage.reference.child("poi_imagens/${UUID.randomUUID()}.jpg")
-            imagemRef.putFile(novaImagemUri!!)
-                .continueWithTask { it.result.storage.downloadUrl }
-                .addOnSuccessListener { uri ->
-                    poiImagemUrl = uri.toString()
-                    if (novoAudioUri != null) {
-                        poiAudioUrl?.let { apagarFicheiroStorage(it) } // Apagar áudio antigo
-                        uploadAudio(poiRefNovo, nome, descricao, tipo)
-                    } else {
-                        salvarNoFirestore(poiRefNovo, nome, descricao, tipo)
-                    }
-                }
-        } else if (novoAudioUri != null) {
-            poiAudioUrl?.let { apagarFicheiroStorage(it) } // Apagar áudio antigo
-            uploadAudio(poiRefNovo, nome, descricao, tipo)
-        } else {
-            salvarNoFirestore(poiRefNovo, nome, descricao, tipo)
-        }
-
-    }
-
-    private fun uploadAudio(
-        poiRef: com.google.firebase.firestore.DocumentReference,
-        nome: String,
-        descricao: String,
-        tipo: String
-    ) {
-        val audioRef = storage.reference.child("poi_audios/${UUID.randomUUID()}.mp3")
-        audioRef.putFile(novoAudioUri!!)
-            .continueWithTask { it.result.storage.downloadUrl }
-            .addOnSuccessListener { uri ->
-                poiAudioUrl = uri.toString()
-                salvarNoFirestore(poiRef, nome, descricao, tipo)
-            }
-    }
-
-    private fun salvarNoFirestore(
-        poiRefNovo: com.google.firebase.firestore.DocumentReference,
-        nome: String,
-        descricao: String,
-        tipo: String
-    ) {
         val updates = mapOf(
             "nome" to nome,
             "descricao" to descricao,
             "tipo" to tipo,
-            "imagemUrl" to poiImagemUrl,
-            "audioUrl" to poiAudioUrl,
-            "latitude" to intent.getDoubleExtra("latitude", 0.0),
-            "longitude" to intent.getDoubleExtra("longitude", 0.0)
+            "imagemBase64" to imagemBase64,
+            "audioBase64" to audioBase64,
+            "latitude" to poiOriginal.latitude,
+            "longitude" to poiOriginal.longitude
         )
 
-        val nomeAntigo = intent.getStringExtra("nome") ?: return
-        val poiRefAntigo = firestore.collection("POIs").document(nomeAntigo)
+        val nomeAntigo = poiOriginal.nome
+        val refAntigo = firestore.collection("POIs").document(nomeAntigo)
+        val refNovo = firestore.collection("POIs").document(nome)
 
-        // Se o nome mudou, cria novo e apaga o antigo
         if (nome != nomeAntigo) {
-            poiRefNovo.set(updates)
-                .addOnSuccessListener {
-                    poiRefAntigo.delete()
-                    Toast.makeText(this, "POI atualizado com novo nome!", Toast.LENGTH_SHORT).show()
-                    val resultIntent = Intent().apply {
-                        putExtra("nome", nome)
-                        putExtra("descricao", descricao)
-                        putExtra("imagemUrl", poiImagemUrl)
-                        putExtra("audioUrl", poiAudioUrl)
-                        putExtra("tipo", tipo)
-                    }
-                    setResult(Activity.RESULT_OK, resultIntent)
-
-                    finish()
-                }
-                .addOnFailureListener {
-                    Toast.makeText(this, "Erro ao atualizar POI!", Toast.LENGTH_SHORT).show()
-                }
+            refNovo.set(updates).addOnSuccessListener {
+                refAntigo.delete()
+                atualizarReferenciasUtilizador(nomeAntigo, nome)
+                enviarResultado(nome, descricao, tipo, imagemBase64, audioBase64)
+            }
         } else {
-            poiRefNovo.update(updates)
-                .addOnSuccessListener {
-                    Toast.makeText(this, "POI atualizado com sucesso!", Toast.LENGTH_SHORT).show()
-                    atualizarReferenciasUtilizador(nomeAntigo, nome)
-                    val resultIntent = Intent().apply {
-                        putExtra("nome", nome)
-                        putExtra("descricao", descricao)
-                        putExtra("imagemUrl", poiImagemUrl)
-                        putExtra("audioUrl", poiAudioUrl)
-                        putExtra("tipo", tipo)
-                    }
-                    setResult(Activity.RESULT_OK, resultIntent)
-
-                    finish()
-                }
-                .addOnFailureListener {
-                    Toast.makeText(this, "Erro ao atualizar POI!", Toast.LENGTH_SHORT).show()
-                }
+            refNovo.update(updates).addOnSuccessListener {
+                enviarResultado(nome, descricao, tipo, imagemBase64, audioBase64)
+            }.addOnFailureListener {
+                Toast.makeText(this, "Erro ao atualizar POI!", Toast.LENGTH_SHORT).show()
+            }
         }
+    }
 
+    private fun enviarResultado(
+        nome: String,
+        descricao: String,
+        tipo: String,
+        imagemBase64: String?,
+        audioBase64: String?
+    ) {
+        val resultIntent = Intent().apply {
+            putExtra("nome", nome)
+            putExtra("descricao", descricao)
+            putExtra("tipo", tipo)
+            putExtra("imagemBase64", imagemBase64)
+            putExtra("audioBase64", audioBase64)
+        }
+        setResult(Activity.RESULT_OK, resultIntent)
+        Toast.makeText(this, "POI atualizado com sucesso!", Toast.LENGTH_SHORT).show()
+        finish()
     }
 
     private fun atualizarReferenciasUtilizador(nomeAntigo: String, nomeNovo: String) {
@@ -274,19 +221,6 @@ class EditPoiActivity : AppCompatActivity() {
                 }
             }
         }
-    }
-
-
-
-    private fun apagarFicheiroStorage(url: String) {
-        val ref = storage.getReferenceFromUrl(url)
-        ref.delete()
-            .addOnSuccessListener {
-                Log.d("EditPoi", "Ficheiro apagado: $url")
-            }
-            .addOnFailureListener {
-                Log.w("EditPoi", "Erro ao apagar ficheiro: $url", it)
-            }
     }
 }
 
