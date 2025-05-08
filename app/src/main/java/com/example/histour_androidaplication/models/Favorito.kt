@@ -5,5 +5,5 @@ data class Favorito(
     val nome: String = "",
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
-    val imagemUrl: String = ""
+    val imagemBase64: String = ""
 )
