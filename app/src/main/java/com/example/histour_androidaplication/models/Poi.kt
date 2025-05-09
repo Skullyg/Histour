@@ -5,6 +5,7 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class Poi(
+    val id: String = "", // novo campo
     val nome: String = "",
     val descricao: String = "",
     val imagemBase64: String? = null,

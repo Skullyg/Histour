@@ -1,6 +1,5 @@
 package com.example.histour_androidaplication
 
-import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -8,7 +7,6 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.example.histour_androidaplication.models.Poi
 import com.google.firebase.firestore.FirebaseFirestore
-import java.util.*
 
 class EditPoiActivity : AppCompatActivity() {
 
@@ -22,7 +20,6 @@ class EditPoiActivity : AppCompatActivity() {
     private lateinit var audioText: TextView
 
     private lateinit var firestore: FirebaseFirestore
-
     private var poiId: String = ""
 
     private var novaImagemUri: Uri? = null
@@ -48,42 +45,18 @@ class EditPoiActivity : AppCompatActivity() {
 
         firestore = FirebaseFirestore.getInstance()
 
-        val nome = intent.getStringExtra("nome") ?: return
-        val descricao = intent.getStringExtra("descricao") ?: ""
-        val imagemBase64 = intent.getStringExtra("imagemBase64")
-        val audioBase64 = intent.getStringExtra("audioBase64")
-        val latitude = intent.getDoubleExtra("latitude", 0.0)
-        val longitude = intent.getDoubleExtra("longitude", 0.0)
-        val tipo = intent.getStringExtra("tipo") ?: "Outro"
+        poiId = intent.getStringExtra("id") ?: return
 
-        val poi = Poi(
-            nome = nome,
-            descricao = descricao,
-            imagemBase64 = imagemBase64,
-            audioBase64 = audioBase64,
-            latitude = latitude,
-            longitude = longitude,
-            tipo = tipo
-        )
-
-
-        poiId = poi.nome
-        editNome.setText(poi.nome)
-        editDescricao.setText(poi.descricao)
-        poi.imagemBase64?.let {
-            val imageBytes = android.util.Base64.decode(it, android.util.Base64.DEFAULT)
-            val bitmap = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-            imageView.setImageBitmap(bitmap)
-        }
-
-        audioText.text = if (!poi.audioBase64.isNullOrEmpty()) "Áudio existente" else "Nenhum áudio selecionado"
-
-        // Spinner
-        val tiposPoi = arrayOf("Museu", "Monumento Histórico", "Praça", "Outro")
-        spinnerTipo.adapter =
-            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, tiposPoi)
-        val tipoIndex = tiposPoi.indexOf(poi.tipo)
-        if (tipoIndex >= 0) spinnerTipo.setSelection(tipoIndex)
+        firestore.collection("POIs").document(poiId).get()
+            .addOnSuccessListener { document ->
+                val poi = document.toObject(Poi::class.java)
+                if (poi != null) {
+                    preencherCampos(poi)
+                } else {
+                    Toast.makeText(this, "Erro ao carregar POI", Toast.LENGTH_SHORT).show()
+                    finish()
+                }
+            }
 
         buttonNovaImagem.setOnClickListener {
             val intent = Intent(Intent.ACTION_PICK).apply { type = "image/*" }
@@ -96,14 +69,32 @@ class EditPoiActivity : AppCompatActivity() {
         }
 
         buttonSalvar.setOnClickListener {
-            guardarAlteracoes(poi)
+            guardarAlteracoes()
         }
+    }
+
+    private fun preencherCampos(poi: Poi) {
+        editNome.setText(poi.nome)
+        editDescricao.setText(poi.descricao)
+
+        poi.imagemBase64?.let {
+            val imageBytes = android.util.Base64.decode(it, android.util.Base64.DEFAULT)
+            val bitmap = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+            imageView.setImageBitmap(bitmap)
+        }
+
+        audioText.text = if (!poi.audioBase64.isNullOrEmpty()) "Áudio existente" else "Nenhum áudio selecionado"
+
+        val tiposPoi = arrayOf("Museu", "Monumento Histórico", "Praça", "Outro")
+        spinnerTipo.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, tiposPoi)
+        val tipoIndex = tiposPoi.indexOf(poi.tipo)
+        if (tipoIndex >= 0) spinnerTipo.setSelection(tipoIndex)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        if (resultCode == Activity.RESULT_OK && data != null) {
+        if (resultCode == RESULT_OK && data != null) {
             when (requestCode) {
                 REQUEST_IMAGE_PICK -> {
                     novaImagemUri = data.data
@@ -125,7 +116,7 @@ class EditPoiActivity : AppCompatActivity() {
         }
     }
 
-    private fun guardarAlteracoes(poiOriginal: Poi) {
+    private fun guardarAlteracoes() {
         val nome = editNome.text.toString().trim()
         val descricao = editDescricao.text.toString().trim()
         val tipo = spinnerTipo.selectedItem.toString()
@@ -135,92 +126,32 @@ class EditPoiActivity : AppCompatActivity() {
             return
         }
 
-        val imagemBase64 = novaImagemUri?.let { uriToBase64(it) } ?: poiOriginal.imagemBase64
-        val audioBase64 = novoAudioUri?.let { uriToBase64(it) } ?: poiOriginal.audioBase64
+        firestore.collection("POIs").document(poiId).get().addOnSuccessListener { snapshot ->
+            val poiOriginal = snapshot.toObject(Poi::class.java)
+            if (poiOriginal != null) {
+                val imagemBase64 = novaImagemUri?.let { uriToBase64(it) } ?: poiOriginal.imagemBase64
+                val audioBase64 = novoAudioUri?.let { uriToBase64(it) } ?: poiOriginal.audioBase64
 
-        val updates = mapOf(
-            "nome" to nome,
-            "descricao" to descricao,
-            "tipo" to tipo,
-            "imagemBase64" to imagemBase64,
-            "audioBase64" to audioBase64,
-            "latitude" to poiOriginal.latitude,
-            "longitude" to poiOriginal.longitude
-        )
+                val updates = mapOf(
+                    "nome" to nome,
+                    "descricao" to descricao,
+                    "tipo" to tipo,
+                    "imagemBase64" to imagemBase64,
+                    "audioBase64" to audioBase64,
+                    "latitude" to poiOriginal.latitude,
+                    "longitude" to poiOriginal.longitude,
+                    "id" to poiOriginal.id // manter o mesmo ID
+                )
 
-        val nomeAntigo = poiOriginal.nome
-        val refAntigo = firestore.collection("POIs").document(nomeAntigo)
-        val refNovo = firestore.collection("POIs").document(nome)
-
-        if (nome != nomeAntigo) {
-            refNovo.set(updates).addOnSuccessListener {
-                refAntigo.delete()
-                atualizarReferenciasUtilizador(nomeAntigo, nome)
-                enviarResultado(nome, descricao, tipo, imagemBase64, audioBase64)
-            }
-        } else {
-            refNovo.update(updates).addOnSuccessListener {
-                enviarResultado(nome, descricao, tipo, imagemBase64, audioBase64)
-            }.addOnFailureListener {
-                Toast.makeText(this, "Erro ao atualizar POI!", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    private fun enviarResultado(
-        nome: String,
-        descricao: String,
-        tipo: String,
-        imagemBase64: String?,
-        audioBase64: String?
-    ) {
-        val resultIntent = Intent().apply {
-            putExtra("nome", nome)
-            putExtra("descricao", descricao)
-            putExtra("tipo", tipo)
-            putExtra("imagemBase64", imagemBase64)
-            putExtra("audioBase64", audioBase64)
-        }
-        setResult(Activity.RESULT_OK, resultIntent)
-        Toast.makeText(this, "POI atualizado com sucesso!", Toast.LENGTH_SHORT).show()
-        finish()
-    }
-
-    private fun atualizarReferenciasUtilizador(nomeAntigo: String, nomeNovo: String) {
-        val utilizadoresRef = firestore.collection("Utilizadores")
-        utilizadoresRef.get().addOnSuccessListener { result ->
-            for (userDoc in result) {
-                val uid = userDoc.id
-
-                // Atualizar nos Favoritos
-                val favoritoRef = utilizadoresRef.document(uid).collection("Favoritos").document(nomeAntigo)
-                favoritoRef.get().addOnSuccessListener { doc ->
-                    if (doc.exists()) {
-                        val dados = doc.data
-                        if (dados != null) {
-                            val novoDados = HashMap(dados)
-                            novoDados["nome"] = nomeNovo
-                            utilizadoresRef.document(uid).collection("Favoritos").document(nomeNovo).set(novoDados)
-                            favoritoRef.delete()
-                        }
+                firestore.collection("POIs").document(poiId).update(updates)
+                    .addOnSuccessListener {
+                        Toast.makeText(this, "POI atualizado com sucesso!", Toast.LENGTH_SHORT).show()
+                        finish()
                     }
-                }
-
-                // Atualizar nas Visitas
-                val visitaRef = utilizadoresRef.document(uid).collection("Visitas").document(nomeAntigo)
-                visitaRef.get().addOnSuccessListener { doc ->
-                    if (doc.exists()) {
-                        val dados = doc.data
-                        if (dados != null) {
-                            val novoDados = HashMap(dados)
-                            novoDados["nome"] = nomeNovo
-                            utilizadoresRef.document(uid).collection("Visitas").document(nomeNovo).set(novoDados)
-                            visitaRef.delete()
-                        }
+                    .addOnFailureListener {
+                        Toast.makeText(this, "Erro ao atualizar POI!", Toast.LENGTH_SHORT).show()
                     }
-                }
             }
         }
     }
 }
-

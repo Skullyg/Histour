@@ -1,78 +1,88 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:padding="16dp"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Criar Ponto de Interesse"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:layout_gravity="center_horizontal" />
-
-    <EditText
-        android:id="@+id/editTextNome"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Nome do POI"
-        android:inputType="text" />
+        android:padding="16dp"
+        android:orientation="vertical">
 
-    <EditText
-        android:id="@+id/editTextDescricao"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Descrição"
-        android:inputType="textMultiLine"
-        android:minHeight="100dp"
-        android:scrollbars="vertical"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Criar Ponto de Interesse"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_gravity="center_horizontal" />
 
-    <!-- Spinner para escolher o tipo do POI -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Tipo do POI"
-        android:textSize="16sp"
-        android:layout_marginTop="8dp"/>
+        <EditText
+            android:id="@+id/editTextNome"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Nome do POI"
+            android:inputType="text" />
 
-    <Spinner
-        android:id="@+id/spinner_tipo_poi"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"/>
+        <EditText
+            android:id="@+id/editTextDescricao"
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            android:hint="Descrição"
+            android:inputType="textMultiLine"
+            android:gravity="top"
+            android:scrollbars="vertical"
+            android:overScrollMode="always"
+            android:maxLines="10"
+            android:minLines="5"
+            android:padding="8dp"
+            android:verticalScrollBarEnabled="true"
+            android:focusable="true"
+            android:focusableInTouchMode="true" />
 
-    <ImageView
-        android:id="@+id/poi_image_preview"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        android:scaleType="centerCrop"
-        android:layout_marginTop="16dp"
-        android:contentDescription="Pré-visualização da imagem"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tipo do POI"
+            android:textSize="16sp"
+            android:layout_marginTop="8dp" />
 
-    <Button
-        android:id="@+id/btn_select_image"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:backgroundTint="#FFA500"
-        android:text="Escolher Imagem"/>
+        <Spinner
+            android:id="@+id/spinner_tipo_poi"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" />
 
-    <!-- Botão para selecionar um ficheiro de áudio -->
-    <Button
-        android:id="@+id/btnSelectAudio"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Selecionar Áudio do Telemóvel"
-        android:backgroundTint="#FFA500"/>
+        <ImageView
+            android:id="@+id/poi_image_preview"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:scaleType="centerCrop"
+            android:layout_marginTop="16dp"
+            android:contentDescription="Pré-visualização da imagem" />
 
+        <Button
+            android:id="@+id/btn_select_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="#FFA500"
+            android:text="Escolher Imagem" />
 
-    <Button
-        android:id="@+id/btnSalvar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Salvar POI"
-        android:backgroundTint="#FFA500"
-        android:textColor="@android:color/white"
-        android:layout_marginTop="16dp" />
-</LinearLayout>
+        <Button
+            android:id="@+id/btnSelectAudio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Selecionar Áudio do Telemóvel"
+            android:backgroundTint="#FFA500"
+            android:layout_marginTop="8dp" />
+
+        <Button
+            android:id="@+id/btnSalvar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Salvar POI"
+            android:backgroundTint="#FFA500"
+            android:textColor="@android:color/white"
+            android:layout_marginTop="16dp" />
+    </LinearLayout>
+</ScrollView>

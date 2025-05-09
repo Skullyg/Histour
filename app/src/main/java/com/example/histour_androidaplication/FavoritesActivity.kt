@@ -8,10 +8,8 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.histour_androidaplication.models.Poi
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.example.histour_androidaplication.FavoritesAdapter
 
-
-class FavoritesActivity : AppCompatActivity() {  // ✅ Sem construtor
+class FavoritesActivity : AppCompatActivity() {
 
     private val db = FirebaseFirestore.getInstance()
     private val userId = FirebaseAuth.getInstance().currentUser?.uid
@@ -21,7 +19,7 @@ class FavoritesActivity : AppCompatActivity() {  // ✅ Sem construtor
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_favorites) // ✅ Certifica-te de que existe esse XML!
+        setContentView(R.layout.activity_favorites)
 
         listView = findViewById(R.id.listViewFavorites)
         adapter = FavoritesAdapter(this, favoritePois)
@@ -32,11 +30,7 @@ class FavoritesActivity : AppCompatActivity() {  // ✅ Sem construtor
         listView.setOnItemClickListener { _, _, position, _ ->
             val poi = favoritePois[position]
             val intent = Intent(this, PoiDetailActivity::class.java)
-            intent.putExtra("nome", poi.nome)
-            intent.putExtra("descricao", poi.descricao)
-            intent.putExtra("latitude", poi.latitude)
-            intent.putExtra("longitude", poi.longitude)
-            intent.putExtra("imagemBase64", poi.imagemBase64)
+            intent.putExtra("id", poi.id) // ✅ apenas o ID, os dados serão buscados no destino
             startActivity(intent)
         }
     }
@@ -51,14 +45,12 @@ class FavoritesActivity : AppCompatActivity() {  // ✅ Sem construtor
             .collection("Favoritos")
             .get()
             .addOnSuccessListener { result ->
-                favoritePois.clear() // Limpar lista antes de recarregar
-
+                favoritePois.clear()
                 for (document in result) {
-                    val poi = document.toObject(Poi::class.java)
+                    val poi = document.toObject(Poi::class.java).copy(id = document.id)
                     favoritePois.add(poi)
                 }
-
-                adapter.notifyDataSetChanged() // Atualizar a lista na UI
+                adapter.notifyDataSetChanged()
             }
             .addOnFailureListener {
                 Toast.makeText(this, "Erro ao carregar favoritos!", Toast.LENGTH_SHORT).show()

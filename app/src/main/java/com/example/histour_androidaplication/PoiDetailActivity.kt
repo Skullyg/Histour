@@ -2,153 +2,102 @@ package com.example.histour_androidaplication
 
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.MediaPlayer
 import android.os.Bundle
-import android.util.Log
+import android.util.Base64
 import android.view.View
-import android.widget.Button
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import com.bumptech.glide.Glide
+import com.example.histour_androidaplication.models.Poi
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlin.jvm.java
-import android.media.MediaPlayer
-import android.net.Uri
 import java.io.File
 
 class PoiDetailActivity : AppCompatActivity() {
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var currentLocation: LatLng? = null
-    private lateinit var buttonFavorite: ImageButton
     private var mediaPlayer: MediaPlayer? = null
-    private val db = FirebaseFirestore.getInstance()
-    private val userId = FirebaseAuth.getInstance().currentUser?.uid
-    private lateinit var buttonEliminarPoi: Button
 
+    private lateinit var db: FirebaseFirestore
+    private lateinit var userId: String
+
+    private lateinit var buttonFavorite: ImageButton
+    private lateinit var buttonEliminarPoi: Button
+    private lateinit var buttonEditarPoi: Button
+    private lateinit var buttonOuvirAudio: Button
+
+    private lateinit var poiId: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.detalhes_poi)
 
+        db = FirebaseFirestore.getInstance()
+        userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-        val nome = intent.getStringExtra("nome") ?: "Nome desconhecido"
-        val descricao = intent.getStringExtra("descricao") ?: "Sem descrição"
-        val latitude = intent.getDoubleExtra("latitude", 0.0)
-        val longitude = intent.getDoubleExtra("longitude", 0.0)
-        val imagemBase64 = intent.getStringExtra("imagemBase64")
-        val audioBase64 = intent.getStringExtra("audioBase64")
-
-
-        val textNome = findViewById<TextView>(R.id.textNome)
-        val textDescricao = findViewById<TextView>(R.id.textDescricao)
-        textDescricao.text = descricao
-        textDescricao.setOnClickListener {
-            val dialog = android.app.AlertDialog.Builder(this)
-                .setTitle("Descrição completa")
-                .setMessage(descricao)
-                .setPositiveButton("Fechar", null)
-                .create()
-
-            dialog.show()
-        }
-        val imageViewPOI = findViewById<ImageView>(R.id.imageViewPOI)
-        val buttonRoute = findViewById<Button>(R.id.button_route)
         buttonFavorite = findViewById(R.id.button_favorite)
-        val tipo = intent.getStringExtra("tipo") ?: "Outro"
-        val textTipo = findViewById<TextView>(R.id.textTipo)
-        textTipo.text = getString(R.string.tipo_label, tipo)
-        val buttonVisited = findViewById<Button>(R.id.button_visited)
-        val buttonComentar = findViewById<Button>(R.id.button_comentar)
-        val buttonVerComentarios = findViewById<Button>(R.id.button_ver_comentarios)
-        val buttonOuvirAudio = findViewById<Button>(R.id.button_ouvir_audio)
         buttonEliminarPoi = findViewById(R.id.button_eliminar_poi)
-        val buttonEditarPoi = findViewById<Button>(R.id.button_editar_poi)
+        buttonEditarPoi = findViewById(R.id.button_editar_poi)
+        buttonOuvirAudio = findViewById(R.id.button_ouvir_audio)
 
-
-
-
-        textNome.text = nome
-        textDescricao.text = descricao
-
-        // Carregar a imagem com Glide
-        if (!imagemBase64.isNullOrEmpty()) {
-            val imageBytes = android.util.Base64.decode(imagemBase64, android.util.Base64.DEFAULT)
-            val bitmap = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-            imageViewPOI.setImageBitmap(bitmap)
-        } else {
-            imageViewPOI.setImageResource(R.drawable.ic_launcher_background)
+        poiId = intent.getStringExtra("id") ?: run {
+            Toast.makeText(this, "ID do POI não encontrado", Toast.LENGTH_SHORT).show()
+            finish()
+            return
         }
 
-
-        // Obter a localização do utilizador
+        carregarPOI()
         getUserLocation()
+    }
 
-        // Configurar clique no botão para abrir a RouteActivity
-        buttonRoute.setOnClickListener {
-            val userLat = currentLocation?.latitude ?: 0.0
-            val userLng = currentLocation?.longitude ?: 0.0
-
-            // Definir ponto fixo no Porto (Avenida dos Aliados)
-            val portoLat = 41.14961
-            val portoLng = -8.61099
-
-            // Se o utilizador não estiver dentro dos limites do Porto, usa o ponto fixo do Porto
-            val originLat = if (isUserInPorto(userLat, userLng)) userLat else portoLat
-            val originLng = if (isUserInPorto(userLat, userLng)) userLng else portoLng
-
-
-            Log.d("PoiDetailActivity", "Origem: $originLat, $originLng | Destino: $latitude, $longitude")
-
-            val intent = Intent(this, RouteActivity::class.java).apply {
-                putExtra("latitude", latitude)
-                putExtra("longitude", longitude)
-                putExtra("user_latitude", originLat)
-                putExtra("user_longitude", originLng)
+    private fun carregarPOI() {
+        db.collection("POIs").document(poiId).get()
+            .addOnSuccessListener { doc ->
+                val poi = doc.toObject(Poi::class.java)
+                if (poi != null) {
+                    preencherUI(poi)
+                } else {
+                    Toast.makeText(this, "POI não encontrado!", Toast.LENGTH_SHORT).show()
+                    finish()
+                }
             }
+            .addOnFailureListener {
+                Toast.makeText(this, "Erro ao buscar POI", Toast.LENGTH_SHORT).show()
+            }
+    }
 
-            startActivity(intent)
+    private fun preencherUI(poi: Poi) {
+        findViewById<TextView>(R.id.textNome).text = poi.nome
+        findViewById<TextView>(R.id.textDescricao).text = poi.descricao
+        findViewById<TextView>(R.id.textTipo).text = getString(R.string.tipo_label, poi.tipo)
+
+        findViewById<TextView>(R.id.textDescricao).setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle("Descrição completa")
+                .setMessage(poi.descricao)
+                .setPositiveButton("Fechar", null)
+                .show()
         }
 
-        checkIfFavorite(nome)
-        buttonFavorite.setOnClickListener {
-            toggleFavorite(nome, descricao, latitude, longitude, imagemBase64 ?: "")
+        poi.imagemBase64?.let {
+            val imageBytes = Base64.decode(it, Base64.DEFAULT)
+            val bitmap = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+            findViewById<ImageView>(R.id.imageViewPOI).setImageBitmap(bitmap)
         }
 
-        verificarSeVisitado(nome, buttonVisited)
-
-
-        buttonVisited.setOnClickListener {
-            marcarComoVisitado(nome, descricao, latitude, longitude, imagemBase64 ?: "", buttonVisited)
-
-        }
-
-
-
-        buttonComentar.setOnClickListener {
-            val intent = Intent(this, ComentarioActivity::class.java)
-            intent.putExtra("poi_nome", nome)
-            startActivity(intent)
-        }
-
-        buttonVerComentarios.setOnClickListener {
-            val intent = Intent(this, VerComentariosActivity::class.java)
-            intent.putExtra("poi_nome", nome)
-            startActivity(intent)
-        }
-        if (!audioBase64.isNullOrEmpty()) {
-            val audioBytes = android.util.Base64.decode(audioBase64, android.util.Base64.DEFAULT)
+        if (!poi.audioBase64.isNullOrEmpty()) {
+            val audioBytes = Base64.decode(poi.audioBase64, Base64.DEFAULT)
             val tempAudio = File.createTempFile("temp_audio", ".mp3", cacheDir)
             tempAudio.writeBytes(audioBytes)
 
+            buttonOuvirAudio.visibility = View.VISIBLE
             buttonOuvirAudio.setOnClickListener {
                 if (mediaPlayer == null) {
                     mediaPlayer = MediaPlayer().apply {
@@ -156,14 +105,11 @@ class PoiDetailActivity : AppCompatActivity() {
                         prepare()
                         start()
                     }
-                    Toast.makeText(this, "A reproduzir áudio...", Toast.LENGTH_SHORT).show()
                 } else {
                     if (mediaPlayer!!.isPlaying) {
                         mediaPlayer!!.pause()
-                        Toast.makeText(this, "Áudio pausado", Toast.LENGTH_SHORT).show()
                     } else {
                         mediaPlayer!!.start()
-                        Toast.makeText(this, "A reproduzir áudio...", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -171,192 +117,130 @@ class PoiDetailActivity : AppCompatActivity() {
             buttonOuvirAudio.visibility = View.GONE
         }
 
+        findViewById<Button>(R.id.button_route).setOnClickListener {
+            abrirRota(poi)
+        }
 
-        if (userId != null) {
-            db.collection("Utilizadores").document(userId).get()
-                .addOnSuccessListener { document ->
-                    val tipo = document.getString("tipo")
-                    if (tipo == "admin") {
-                        buttonEliminarPoi.visibility = View.VISIBLE
-                        buttonEditarPoi.visibility = View.VISIBLE
+        findViewById<Button>(R.id.button_comentar).setOnClickListener {
+            startActivity(Intent(this, ComentarioActivity::class.java).putExtra("poi_nome", poi.nome))
+        }
 
-                        buttonEliminarPoi.setOnClickListener {
-                            eliminarPoi(nome)
-                        }
+        findViewById<Button>(R.id.button_ver_comentarios).setOnClickListener {
+            startActivity(Intent(this, VerComentariosActivity::class.java).putExtra("poi_nome", poi.nome))
+        }
 
-                        buttonEditarPoi.setOnClickListener {
-                            val intent = Intent(this, EditPoiActivity::class.java).apply {
-                                putExtra("nome", nome)
-                                putExtra("descricao", descricao)
-                                putExtra("imagemBase64", imagemBase64)
-                                putExtra("audioBase64", audioBase64)
-                                putExtra("latitude", latitude)
-                                putExtra("longitude", longitude)
-                                putExtra("tipo", tipo)
-                            }
-                            startActivityForResult(intent, 123)
+        verificarFavorito(poi)
+        verificarSeVisitado(poi)
 
-                        }
+        findViewById<Button>(R.id.button_visited).setOnClickListener {
+            marcarComoVisitado(poi)
+        }
 
+        // Ações de admin
+        db.collection("Utilizadores").document(userId).get()
+            .addOnSuccessListener { doc ->
+                if (doc.getString("tipo") == "admin") {
+                    buttonEliminarPoi.visibility = View.VISIBLE
+                    buttonEditarPoi.visibility = View.VISIBLE
 
+                    buttonEliminarPoi.setOnClickListener { eliminarPoi(poiId) }
+
+                    buttonEditarPoi.setOnClickListener {
+                        startActivity(Intent(this, EditPoiActivity::class.java).apply {
+                            putExtra("id", poiId)
+                        })
                     }
                 }
-        }
-
-
-
-
-
-    }
-
-    private fun getUserLocation() {
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-            ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 1000)
-            return
-        }
-
-        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-            if (location != null) {
-                currentLocation = LatLng(location.latitude, location.longitude)
             }
-        }.addOnFailureListener {
-            Toast.makeText(this, "Erro ao obter localização", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun abrirRota(poi: Poi) {
+        val latUser = currentLocation?.latitude ?: 41.14961
+        val lngUser = currentLocation?.longitude ?: -8.61099
+
+        val origin = if (isUserInPorto(latUser, lngUser)) LatLng(latUser, lngUser) else LatLng(41.14961, -8.61099)
+
+        val intent = Intent(this, RouteActivity::class.java).apply {
+            putExtra("latitude", poi.latitude)
+            putExtra("longitude", poi.longitude)
+            putExtra("user_latitude", origin.latitude)
+            putExtra("user_longitude", origin.longitude)
+        }
+        startActivity(intent)
+    }
+
+    private fun verificarFavorito(poi: Poi) {
+        db.collection("Utilizadores").document(userId)
+            .collection("Favoritos").document(poi.nome).get()
+            .addOnSuccessListener {
+                val resId = if (it.exists()) R.drawable.ic_favorite_filled else R.drawable.ic_favorite_border
+                buttonFavorite.setImageResource(resId)
+            }
+
+        buttonFavorite.setOnClickListener {
+            val ref = db.collection("Utilizadores").document(userId)
+                .collection("Favoritos").document(poi.nome)
+
+            ref.get().addOnSuccessListener { doc ->
+                if (doc.exists()) {
+                    ref.delete().addOnSuccessListener {
+                        buttonFavorite.setImageResource(R.drawable.ic_favorite_border)
+                    }
+                } else {
+                    val fav = mapOf(
+                        "nome" to poi.nome,
+                        "descricao" to poi.descricao,
+                        "latitude" to poi.latitude,
+                        "longitude" to poi.longitude,
+                        "imagemBase64" to poi.imagemBase64
+                    )
+                    ref.set(fav).addOnSuccessListener {
+                        buttonFavorite.setImageResource(R.drawable.ic_favorite_filled)
+                    }
+                }
+            }
         }
     }
 
-    private fun isUserInPorto(lat: Double, lng: Double): Boolean {
-        val portoBounds = listOf(
-            LatLng(41.110, -8.675), // Sudoeste
-            LatLng(41.200, -8.560)  // Nordeste
+    private fun verificarSeVisitado(poi: Poi) {
+        val btn = findViewById<Button>(R.id.button_visited)
+        db.collection("Utilizadores").document(userId)
+            .collection("Visitas").document(poi.nome)
+            .get()
+            .addOnSuccessListener { doc ->
+                if (doc.exists()) {
+                    btn.text = getString(R.string.ja_visitado)
+                    btn.isEnabled = false
+                    findViewById<Button>(R.id.button_comentar).visibility = View.VISIBLE
+                }
+            }
+    }
+
+    private fun marcarComoVisitado(poi: Poi) {
+        val btn = findViewById<Button>(R.id.button_visited)
+        val ref = db.collection("Utilizadores").document(userId)
+            .collection("Visitas").document(poi.nome)
+
+        val dados = mapOf(
+            "nome" to poi.nome,
+            "descricao" to poi.descricao,
+            "latitude" to poi.latitude,
+            "longitude" to poi.longitude,
+            "imagemBase64" to poi.imagemBase64,
+            "timestamp" to System.currentTimeMillis()
         )
 
-        return lat in portoBounds[0].latitude..portoBounds[1].latitude &&
-                lng in portoBounds[0].longitude..portoBounds[1].longitude
-    }
-
-    private fun checkIfFavorite(nome: String) {
-        if (userId != null) {
-            db.collection("Utilizadores").document(userId)
-                .collection("Favoritos")
-                .document(nome)
-                .get()
-                .addOnSuccessListener { document ->
-                    if (document.exists()) {
-                        buttonFavorite.setImageResource(R.drawable.ic_favorite_filled)
-                    } else {
-                        buttonFavorite.setImageResource(R.drawable.ic_favorite_border)
-                    }
-                }
+        ref.set(dados).addOnSuccessListener {
+            Toast.makeText(this, "Marcado como visitado!", Toast.LENGTH_SHORT).show()
+            btn.text = getString(R.string.ja_visitado)
+            btn.isEnabled = false
+            findViewById<Button>(R.id.button_comentar).visibility = View.VISIBLE
         }
     }
 
-    private fun toggleFavorite(nome: String, descricao: String, latitude: Double, longitude: Double, imagemUrl: String) {
-        if (userId == null) {
-            Toast.makeText(this, "É necessário iniciar sessão!", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val favoritoRef = db.collection("Utilizadores").document(userId)
-            .collection("Favoritos").document(nome)
-
-        favoritoRef.get().addOnSuccessListener { document ->
-            if (document.exists()) {
-                favoritoRef.delete()
-                    .addOnSuccessListener {
-                        buttonFavorite.setImageResource(R.drawable.ic_favorite_border)
-                        Toast.makeText(this, "Removido dos Favoritos!", Toast.LENGTH_SHORT).show()
-                    }
-            } else {
-                val favorito = mapOf(
-                    "nome" to nome,
-                    "descricao" to descricao,
-                    "latitude" to latitude,
-                    "longitude" to longitude,
-                    "imagemUrl" to imagemUrl
-                )
-                favoritoRef.set(favorito)
-                    .addOnSuccessListener {
-                        buttonFavorite.setImageResource(R.drawable.ic_favorite_filled)
-                        Toast.makeText(this, "Adicionado aos Favoritos!", Toast.LENGTH_SHORT).show()
-                    }
-            }
-        }
-    }
-
-    private fun marcarComoVisitado(
-        nome: String,
-        descricao: String,
-        latitude: Double,
-        longitude: Double,
-        imagemUrl: String,
-        button: Button
-    ) {
-        if (userId == null) {
-            Toast.makeText(this, "É necessário iniciar sessão!", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val visitaRef = db.collection("Utilizadores").document(userId)
-            .collection("Visitas").document(nome)
-
-        visitaRef.get().addOnSuccessListener { document ->
-            if (document.exists()) {
-                Toast.makeText(this, "Já marcaste este ponto como visitado!", Toast.LENGTH_SHORT).show()
-                button.text = getString(R.string.ja_visitado)
-                button.isEnabled = false
-                findViewById<Button>(R.id.button_comentar).visibility = View.VISIBLE
-            } else {
-                val visita = mapOf(
-                    "nome" to nome,
-                    "descricao" to descricao,
-                    "latitude" to latitude,
-                    "longitude" to longitude,
-                    "imagemUrl" to imagemUrl,
-                    "timestamp" to System.currentTimeMillis()
-                )
-                visitaRef.set(visita)
-                    .addOnSuccessListener {
-                        Toast.makeText(this, "Marcado como visitado!", Toast.LENGTH_SHORT).show()
-                        button.text = getString(R.string.ja_visitado)
-                        button.isEnabled = false
-                        findViewById<Button>(R.id.button_comentar).visibility = View.VISIBLE
-                    }
-            }
-        }
-    }
-
-
-
-    private fun verificarSeVisitado(nome: String, button: Button) {
-        if (userId == null) return
-
-        val visitaRef = db.collection("Utilizadores").document(userId)
-            .collection("Visitas").document(nome)
-
-        visitaRef.get().addOnSuccessListener { document ->
-            if (document.exists()) {
-                button.text = getString(R.string.ja_visitado)
-                button.isEnabled = false
-                findViewById<Button>(R.id.button_comentar).visibility = View.VISIBLE
-            }
-        }
-    }
-
-
-    override fun onDestroy() {
-        super.onDestroy()
-        mediaPlayer?.release()
-        mediaPlayer = null
-    }
-
-    private fun eliminarPoi(nome: String) {
-        db.collection("POIs").whereEqualTo("nome", nome).get()
-            .addOnSuccessListener { documents ->
-                for (doc in documents) {
-                    doc.reference.delete()
-                }
+    private fun eliminarPoi(poiId: String) {
+        db.collection("POIs").document(poiId).delete()
+            .addOnSuccessListener {
                 Toast.makeText(this, "POI eliminado com sucesso!", Toast.LENGTH_SHORT).show()
                 finish()
             }
@@ -365,51 +249,26 @@ class PoiDetailActivity : AppCompatActivity() {
             }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == 123 && resultCode == RESULT_OK && data != null) {
-            val novoNome = data.getStringExtra("nome") ?: ""
-            val novaDescricao = data.getStringExtra("descricao") ?: ""
-            val novaImagemBase64 = data.getStringExtra("imagemBase64")
-            val novoAudioBase64 = data.getStringExtra("audioBase64")
-            val novoTipo = data.getStringExtra("tipo") ?: "Outro"
+    private fun getUserLocation() {
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 1000)
+            return
+        }
 
-            findViewById<TextView>(R.id.textNome).text = novoNome
-            findViewById<TextView>(R.id.textDescricao).text = novaDescricao
-            findViewById<TextView>(R.id.textTipo).text = getString(R.string.tipo_label, novoTipo)
-
-            if (!novaImagemBase64.isNullOrEmpty()) {
-                val imageBytes = android.util.Base64.decode(novaImagemBase64, android.util.Base64.DEFAULT)
-                val bitmap = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                findViewById<ImageView>(R.id.imageViewPOI).setImageBitmap(bitmap)
-            }
-
-            if (!novoAudioBase64.isNullOrEmpty()) {
-                val audioBytes = android.util.Base64.decode(novoAudioBase64, android.util.Base64.DEFAULT)
-                val tempAudio = File.createTempFile("temp_audio", ".mp3", cacheDir)
-                tempAudio.writeBytes(audioBytes)
-
-                val btnOuvir = findViewById<Button>(R.id.button_ouvir_audio)
-                btnOuvir.visibility = View.VISIBLE
-                btnOuvir.setOnClickListener {
-                    if (mediaPlayer == null) {
-                        mediaPlayer = MediaPlayer().apply {
-                            setDataSource(tempAudio.absolutePath)
-                            prepare()
-                            start()
-                        }
-                    } else {
-                        if (mediaPlayer!!.isPlaying) {
-                            mediaPlayer!!.pause()
-                        } else {
-                            mediaPlayer!!.start()
-                        }
-                    }
-                }
+        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+            if (location != null) {
+                currentLocation = LatLng(location.latitude, location.longitude)
             }
         }
     }
 
+    private fun isUserInPorto(lat: Double, lng: Double): Boolean {
+        return lat in 41.110..41.200 && lng in -8.675..-8.560
+    }
 
-
+    override fun onDestroy() {
+        super.onDestroy()
+        mediaPlayer?.release()
+        mediaPlayer = null
+    }
 }

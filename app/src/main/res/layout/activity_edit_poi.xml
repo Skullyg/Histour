@@ -29,12 +29,14 @@
             android:hint="Descrição"
             android:inputType="textMultiLine"
             android:minHeight="100dp"
-            android:scrollbars="vertical"/>
+            android:scrollbars="vertical"
+            android:gravity="top"
+            android:overScrollMode="ifContentScrolls" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="edit_Tipo_do_POI"
+            android:text="Tipo do POI"
             android:textSize="16sp"
             android:layout_marginTop="8dp"/>
 

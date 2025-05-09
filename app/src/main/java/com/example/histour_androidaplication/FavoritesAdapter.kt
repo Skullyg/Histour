@@ -1,14 +1,13 @@
 package com.example.histour_androidaplication
 
 import android.content.Context
+import android.util.Base64
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.core.content.ContextCompat
-import com.bumptech.glide.Glide
 import com.example.histour_androidaplication.models.Poi
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -22,31 +21,36 @@ class FavoritesAdapter(private val context: Context, private val favoritos: List
 
         val textNome = view.findViewById<TextView>(R.id.textFavoriteNome)
         val imageView = view.findViewById<ImageView>(R.id.imageFavorite)
+        val buttonRemove = view.findViewById<ImageView>(R.id.buttonRemoveFavorite)
 
         val poi = favoritos[position]
 
         textNome.text = poi.nome
 
+        // Mostrar imagem base64 (ou placeholder)
         if (!poi.imagemBase64.isNullOrEmpty()) {
-            val imageBytes = android.util.Base64.decode(poi.imagemBase64, android.util.Base64.DEFAULT)
+            val imageBytes = Base64.decode(poi.imagemBase64, Base64.DEFAULT)
             val bitmap = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
             imageView.setImageBitmap(bitmap)
         } else {
             imageView.setImageResource(R.drawable.ic_launcher_background)
         }
 
-
-        // Remover favorito ao clicar no ícone
-        view.findViewById<ImageView>(R.id.buttonRemoveFavorite).setOnClickListener {
+        // Remover favorito
+        buttonRemove.setOnClickListener {
             val userId = FirebaseAuth.getInstance().currentUser?.uid
-            if (userId != null) {
-                FirebaseFirestore.getInstance().collection("Utilizadores")
+            if (userId != null && poi.id.isNotEmpty()) {
+                FirebaseFirestore.getInstance()
+                    .collection("Utilizadores")
                     .document(userId)
                     .collection("Favoritos")
-                    .document(poi.nome)
+                    .document(poi.id)
                     .delete()
                     .addOnSuccessListener {
                         Toast.makeText(context, "Removido dos favoritos!", Toast.LENGTH_SHORT).show()
+                    }
+                    .addOnFailureListener {
+                        Toast.makeText(context, "Erro ao remover favorito!", Toast.LENGTH_SHORT).show()
                     }
             }
         }

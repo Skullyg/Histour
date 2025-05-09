@@ -52,6 +52,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // Inicializações
         drawerLayout = findViewById(R.id.drawer_layout)
         searchBar = findViewById(R.id.search_bar)
         menuButton = findViewById(R.id.menu_button)
@@ -65,7 +66,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         searchBar.setOnItemClickListener { _, _, position, _ ->
             val selectedPoiName = searchAdapter.getItem(position)
             val selectedPoi = poiList.find { it.nome == selectedPoiName }
-
             if (::googleMap.isInitialized && selectedPoi != null) {
                 val poiLocation = LatLng(selectedPoi.latitude, selectedPoi.longitude)
                 googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(poiLocation, 17f))
@@ -83,29 +83,16 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         requestLocationPermission()
 
-        // 🔹 Atualizar POIs automaticamente ao adicionar/remover no Firestore
         firestoreListener = db.collection("POIs")
-            .addSnapshotListener { snapshots, e ->
-                if (e != null) {
-                    Toast.makeText(this, "Erro ao atualizar POIs!", Toast.LENGTH_SHORT).show()
-                    return@addSnapshotListener
-                }
-                loadPoisFromFirestore()
-            }
+            .addSnapshotListener { _, _ -> loadPoisFromFirestore() }
 
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        currentUser?.uid?.let { uid ->
+        // Verifica se utilizador é admin
+        FirebaseAuth.getInstance().currentUser?.uid?.let { uid ->
             db.collection("Utilizadores").document(uid).get()
-                .addOnSuccessListener { document ->
-                    val tipo = document.getString("tipo")
-                    isAdmin = tipo == "admin"
-                }
-                .addOnFailureListener {
-                    Toast.makeText(this, "Erro ao verificar tipo de utilizador", Toast.LENGTH_SHORT).show()
+                .addOnSuccessListener { doc ->
+                    isAdmin = doc.getString("tipo") == "admin"
                 }
         }
-
-
     }
 
     override fun onMapReady(map: GoogleMap) {
@@ -121,23 +108,15 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         loadPoisFromFirestore()
 
+        // 🟠 Atualização aqui: passar apenas o `id` para o PoiDetailActivity
         googleMap.setOnMarkerClickListener { marker ->
-            if (marker.tag is Poi) {
-                val poi = marker.tag as Poi
+            val poi = marker.tag as? Poi
+            if (poi != null) {
                 val intent = Intent(this, PoiDetailActivity::class.java)
-
-                intent.putExtra("nome", poi.nome)
-                intent.putExtra("descricao", poi.descricao)
-                intent.putExtra("latitude", poi.latitude)
-                intent.putExtra("longitude", poi.longitude)
-                intent.putExtra("imagemBase64", poi.imagemBase64 ?: "")
-                intent.putExtra("tipo", poi.tipo)// ✅ Adiciona esta linha!
-
+                intent.putExtra("id", poi.id) // ← agora passa o ID
                 startActivity(intent)
                 true
-            } else {
-                false
-            }
+            } else false
         }
 
         googleMap.setOnMapClickListener { latLng ->
@@ -147,7 +126,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 Toast.makeText(this, "Apenas administradores podem criar POIs.", Toast.LENGTH_SHORT).show()
             }
         }
-
     }
 
     private fun requestLocationPermission() {
@@ -161,28 +139,18 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
                 currentLocation = if (location != null && isLocationInPorto(location.latitude, location.longitude)) {
                     LatLng(location.latitude, location.longitude)
-                } else {
-                    portoLocation // 📍 Define o centro do Porto como localização padrão
-                }
+                } else portoLocation
 
-                googleMap.let {
-                    it.clear()
-                    it.addMarker(MarkerOptions().position(currentLocation!!).title("Minha Localização"))
-                    it.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation!!, 15f))
-                    loadPoisFromFirestore()
-                }
+                googleMap.clear()
+                googleMap.addMarker(MarkerOptions().position(currentLocation!!).title("Minha Localização"))
+                googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation!!, 15f))
+                loadPoisFromFirestore()
             }
         }
     }
 
-
     private fun isLocationInPorto(latitude: Double, longitude: Double): Boolean {
-        val latMin = 41.1200
-        val latMax = 41.1900
-        val lngMin = -8.6600
-        val lngMax = -8.5600
-
-        return latitude in latMin..latMax && longitude in lngMin..lngMax
+        return latitude in 41.1200..41.1900 && longitude in -8.6600..-8.5600
     }
 
     private fun loadPoisFromFirestore() {
@@ -190,25 +158,22 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             .addOnSuccessListener { result ->
                 googleMap.clear()
                 poiList.clear()
+                val poiNames = mutableListOf<String>()
 
                 currentLocation?.let {
                     googleMap.addMarker(MarkerOptions().position(it).title("Minha Localização"))
                 }
 
-                val poiNames = mutableListOf<String>()
-
-                for (document in result) {
-                    val poi = document.toObject(Poi::class.java)
+                for (doc in result) {
+                    val poi = doc.toObject(Poi::class.java).copy(id = doc.id)
                     poiList.add(poi)
                     poiNames.add(poi.nome)
 
-                    val position = LatLng(poi.latitude, poi.longitude)
-                    val markerIcon = BitmapDescriptorFactory.fromResource(R.drawable.marker_orange) // <- usa ícone laranja
                     val marker = googleMap.addMarker(
                         MarkerOptions()
-                            .position(position)
+                            .position(LatLng(poi.latitude, poi.longitude))
                             .title(poi.nome)
-                            .icon(markerIcon)
+                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.marker_orange))
                     )
                     marker?.tag = poi
                 }
@@ -223,19 +188,18 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     private fun showCreatePoiDialog(latLng: LatLng) {
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("Criar novo POI")
-        builder.setMessage("Deseja adicionar um novo Ponto de Interesse aqui?")
-
-        builder.setPositiveButton("Sim") { _, _ ->
-            val intent = Intent(this, CreatePoiActivity::class.java)
-            intent.putExtra("latitude", latLng.latitude)
-            intent.putExtra("longitude", latLng.longitude)
-            startActivityForResult(intent, cREATEPOIREQUEST)
-        }
-
-        builder.setNegativeButton("Cancelar") { dialog, _ -> dialog.dismiss() }
-        builder.show()
+        AlertDialog.Builder(this)
+            .setTitle("Criar novo POI")
+            .setMessage("Deseja adicionar um novo Ponto de Interesse aqui?")
+            .setPositiveButton("Sim") { _, _ ->
+                val intent = Intent(this, CreatePoiActivity::class.java).apply {
+                    putExtra("latitude", latLng.latitude)
+                    putExtra("longitude", latLng.longitude)
+                }
+                startActivityForResult(intent, cREATEPOIREQUEST)
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -254,20 +218,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            R.id.nav_favorites -> {
-                val intent = Intent(this, FavoritesActivity::class.java)
-                startActivity(intent)
-            }
-            R.id.nav_settings -> {
-                val intent = Intent(this, SettingsActivity::class.java)
-                startActivity(intent)
-            }
-            R.id.nav_route -> {
-                val intent = Intent(this, PlaneadorDeRotaActivity::class.java)
-                startActivity(intent)
-            }
-
-
+            R.id.nav_favorites -> startActivity(Intent(this, FavoritesActivity::class.java))
+            R.id.nav_settings -> startActivity(Intent(this, SettingsActivity::class.java))
+            R.id.nav_route -> startActivity(Intent(this, PlaneadorDeRotaActivity::class.java))
             R.id.nav_logout -> {
                 FirebaseAuth.getInstance().signOut()
                 startActivity(Intent(this, LoginActivity::class.java))
@@ -278,8 +231,4 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         drawerLayout.closeDrawer(GravityCompat.START)
         return true
     }
-
-
-
-
 }
