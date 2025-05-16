@@ -6,6 +6,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.histour_androidaplication.models.Poi
+import com.example.histour_androidaplication.models.RotaTemporaria
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -15,11 +16,8 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.PolylineOptions
 import com.google.maps.android.PolyUtil
-import okhttp3.Call
-import okhttp3.Callback
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
+import com.google.firebase.firestore.FirebaseFirestore
+import okhttp3.*
 import org.json.JSONObject
 import java.io.IOException
 
@@ -31,59 +29,88 @@ class MultiPOIActivity : AppCompatActivity(), OnMapReadyCallback {
     private var polylineWalk: PolylineOptions? = null
     private var polylineTransit: PolylineOptions? = null
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_multi_poi)
 
-        selectedPOIs = intent.getParcelableArrayListExtra("selectedPOIs") ?: listOf()
+        val rotaId = intent.getStringExtra("ROTA_ID")
+        if (rotaId.isNullOrEmpty()) {
+            Toast.makeText(this, "Erro: ID da rota inválido", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
 
-        val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
-        mapFragment.getMapAsync(this)
+        // Busca os POIs da rota temporária no Firestore
+        FirebaseFirestore.getInstance().collection("RotasTemporarias")
+            .document(rotaId)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    // Usa o toObject para converter para a classe RotaTemporaria
+                    val rotaTemp = document.toObject(RotaTemporaria::class.java)
+                    selectedPOIs = rotaTemp?.pois ?: listOf()
 
-        if (selectedPOIs.size >= 2) {
-            obterRotasTodosPOIs(selectedPOIs, "driving") { linha, duracao ->
-                runOnUiThread {
-                    linha?.let {
-                        polylineCar = it                 // <- Salva a linha
-                        googleMap.addPolyline(it)
+                    // Após carregar os POIs, inicializa o mapa
+                    val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
+                    mapFragment.getMapAsync(this)
+
+                    // Se tiver pelo menos 2 POIs, busca as rotas
+                    if (selectedPOIs.size >= 2) {
+                        carregarRotas()
                     }
-                    findViewById<TextView>(R.id.travel_time_car).text = "Carro: $duracao"
+
+                } else {
+                    Toast.makeText(this, "Rota não encontrada", Toast.LENGTH_SHORT).show()
+                    finish()
                 }
             }
+            .addOnFailureListener {
+                Toast.makeText(this, "Erro ao buscar rota", Toast.LENGTH_SHORT).show()
+                finish()
+            }
 
-            obterRotasTodosPOIs(selectedPOIs, "walking") { linha, duracao ->
-                runOnUiThread {
-                    linha?.let {
-                        polylineWalk = it               // <- Salva a linha
-                        googleMap.addPolyline(it)
-                    }
-                    findViewById<TextView>(R.id.travel_time_walk).text = "A pé: $duracao"
+        // Define os cliques para mostrar as rotas
+        findViewById<TextView>(R.id.travel_time_car).setOnClickListener {
+            mostrarSomenteRota(polylineCar)
+        }
+        findViewById<TextView>(R.id.travel_time_walk).setOnClickListener {
+            mostrarSomenteRota(polylineWalk)
+        }
+        findViewById<TextView>(R.id.travel_time_transit).setOnClickListener {
+            mostrarSomenteRota(polylineTransit)
+        }
+    }
+
+    private fun carregarRotas() {
+        obterRotasTodosPOIs(selectedPOIs, "driving") { linha, duracao ->
+            runOnUiThread {
+                linha?.let {
+                    polylineCar = it
+                    googleMap.addPolyline(it)
                 }
-            }
-
-            obterRotasTodosPOIs(selectedPOIs, "transit") { linha, duracao ->
-                runOnUiThread {
-                    linha?.let {
-                        polylineTransit = it            // <- Salva a linha
-                        googleMap.addPolyline(it)
-                    }
-                    findViewById<TextView>(R.id.travel_time_transit).text = "Transportes: $duracao"
-                }
-            }
-
-
-            findViewById<TextView>(R.id.travel_time_car).setOnClickListener {
-                mostrarSomenteRota(polylineCar)
-            }
-            findViewById<TextView>(R.id.travel_time_walk).setOnClickListener {
-                mostrarSomenteRota(polylineWalk)
-            }
-            findViewById<TextView>(R.id.travel_time_transit).setOnClickListener {
-                mostrarSomenteRota(polylineTransit)
+                findViewById<TextView>(R.id.travel_time_car).text = "Carro: $duracao"
             }
         }
 
+        obterRotasTodosPOIs(selectedPOIs, "walking") { linha, duracao ->
+            runOnUiThread {
+                linha?.let {
+                    polylineWalk = it
+                    googleMap.addPolyline(it)
+                }
+                findViewById<TextView>(R.id.travel_time_walk).text = "A pé: $duracao"
+            }
+        }
+
+        obterRotasTodosPOIs(selectedPOIs, "transit") { linha, duracao ->
+            runOnUiThread {
+                linha?.let {
+                    polylineTransit = it
+                    googleMap.addPolyline(it)
+                }
+                findViewById<TextView>(R.id.travel_time_transit).text = "Transportes: $duracao"
+            }
+        }
     }
 
     override fun onMapReady(map: GoogleMap) {
@@ -161,7 +188,7 @@ class MultiPOIActivity : AppCompatActivity(), OnMapReadyCallback {
                                 for (i in 0 until legs.length()) {
                                     totalSeconds += legs.getJSONObject(i).getJSONObject("duration").getInt("value")
                                 }
-                                // converte para horas e minutos
+                                // converte para minutos
                                 val minutes = totalSeconds / 60
                                 "${minutes} min"
                             }
@@ -224,15 +251,10 @@ class MultiPOIActivity : AppCompatActivity(), OnMapReadyCallback {
         if (polylineOptions != null) {
             googleMap.addPolyline(polylineOptions)
         } else {
-            // Mensagem temporária para debug
             runOnUiThread {
                 Toast.makeText(this, "A rota ainda está a ser carregada. Tenta novamente em alguns segundos.", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-
 }
-
-
-

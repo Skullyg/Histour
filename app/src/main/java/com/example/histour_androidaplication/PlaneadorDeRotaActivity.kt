@@ -48,9 +48,22 @@ class PlaneadorDeRotaActivity : AppCompatActivity() {
             if (selectedPOIs.size < 2) {
                 Toast.makeText(this, "Escolhe pelo menos 2 POIs!", Toast.LENGTH_SHORT).show()
             } else {
-                val intent = Intent(this, MultiPOIActivity::class.java)
-                intent.putParcelableArrayListExtra("selectedPOIs", ArrayList(selectedPOIs))
-                startActivity(intent)
+                val rotaId = FirebaseFirestore.getInstance().collection("RotasTemporarias").document().id
+
+                val rotaTemp = hashMapOf("pois" to selectedPOIs)
+
+                FirebaseFirestore.getInstance().collection("RotasTemporarias")
+                    .document(rotaId)
+                    .set(rotaTemp)
+                    .addOnSuccessListener {
+                        val intent = Intent(this, MultiPOIActivity::class.java)
+                        intent.putExtra("ROTA_ID", rotaId)
+                        startActivity(intent)
+                    }
+                    .addOnFailureListener {
+                        Toast.makeText(this, "Erro ao guardar os POIs!", Toast.LENGTH_SHORT).show()
+                    }
+
             }
         }
 

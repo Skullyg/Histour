@@ -182,9 +182,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 searchAdapter.addAll(poiNames)
                 searchAdapter.notifyDataSetChanged()
             }
-            .addOnFailureListener {
-                Toast.makeText(this, "Erro ao carregar POIs!", Toast.LENGTH_SHORT).show()
-            }
+
     }
 
     private fun showCreatePoiDialog(latLng: LatLng) {
