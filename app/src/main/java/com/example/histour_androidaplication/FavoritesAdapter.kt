@@ -12,7 +12,7 @@ import com.example.histour_androidaplication.models.Poi
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
-class FavoritesAdapter(private val context: Context, private val favoritos: List<Poi>) :
+class FavoritesAdapter(private val context: Context, private val favoritos: MutableList<Poi>) :
     android.widget.ArrayAdapter<Poi>(context, R.layout.item_favorite, favoritos) {
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
@@ -48,6 +48,8 @@ class FavoritesAdapter(private val context: Context, private val favoritos: List
                     .delete()
                     .addOnSuccessListener {
                         Toast.makeText(context, "Removido dos favoritos!", Toast.LENGTH_SHORT).show()
+                        favoritos.removeAt(position)
+                        notifyDataSetChanged()
                     }
                     .addOnFailureListener {
                         Toast.makeText(context, "Erro ao remover favorito!", Toast.LENGTH_SHORT).show()
