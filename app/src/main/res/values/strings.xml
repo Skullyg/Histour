@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Histour-android application</string>
+    <string name="app_name">Histour</string>
     <string name="default_web_client_id">95185547053-kgnv82o66tmuui5ssaubba8cnqse0knr.apps.googleusercontent.com</string>
     <string name="tempo_estimado">Tempo estimado: %1$s</string>
     <string name="tipo_label">Tipo: %1$s</string>
