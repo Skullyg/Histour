@@ -1,5 +1,6 @@
 package com.example.histour_androidaplication
 
+import android.R.attr.duration
 import android.annotation.SuppressLint
 import android.graphics.Color
 import android.os.Bundle
@@ -169,11 +170,18 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
                         val leg = route?.legs?.firstOrNull()
 
                         val duration = leg?.duration?.text ?: "Desconhecido"
+                        val modeText = when (mode) {
+                            "driving" -> "Carro"
+                            "walking" -> "A pé"
+                            "transit" -> "Transportes Públicos"
+                            else -> "Modo desconhecido"
+                        }
 
                         // Atualiza a interface com o tempo estimado
                         runOnUiThread {
-                            travelTimeTextView.text = duration
-
+                            travelTimeTextView.text = buildString { append(modeText)
+                                append(": ")
+                                append(duration) }
                         }
 
                         // Se a rota tiver uma polyline, desenhá-la no mapa
@@ -211,8 +219,18 @@ class RouteActivity : AppCompatActivity(), OnMapReadyCallback {
                 override fun onResponse(call: Call<DirectionsResponse>, response: Response<DirectionsResponse>) {
                     if (response.isSuccessful) {
                         val route = response.body()?.routes?.firstOrNull()
-                        val duration = route?.legs?.sumOf { it.duration.value } ?: 0
-                        runOnUiThread { travelTimeTextView.text = "${duration / 60} min" }
+                        val durationInMin = duration / 60
+                        val modeText = when (mode) {
+                            "driving" -> "Carro"
+                            "walking" -> "A pé"
+                            "transit" -> "Transportes Públicos"
+                            else -> "Modo desconhecido"
+                        }
+
+                        runOnUiThread {
+                            travelTimeTextView.text = "$modeText: $durationInMin min"
+                        }
+
                         route?.overviewPolyline?.points?.let { drawRoute(it, color, mode) }
                     }
                 }
