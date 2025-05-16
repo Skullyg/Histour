@@ -179,7 +179,7 @@ class PoiDetailActivity : AppCompatActivity() {
 
         buttonFavorite.setOnClickListener {
             val ref = db.collection("Utilizadores").document(userId)
-                .collection("Favoritos").document(poi.nome)
+                .collection("Favoritos").document(poi.id)
 
             ref.get().addOnSuccessListener { doc ->
                 if (doc.exists()) {
@@ -188,6 +188,7 @@ class PoiDetailActivity : AppCompatActivity() {
                     }
                 } else {
                     val fav = mapOf(
+                        "id" to poi.id,
                         "nome" to poi.nome,
                         "descricao" to poi.descricao,
                         "latitude" to poi.latitude,
@@ -205,7 +206,7 @@ class PoiDetailActivity : AppCompatActivity() {
     private fun verificarSeVisitado(poi: Poi) {
         val btn = findViewById<Button>(R.id.button_visited)
         db.collection("Utilizadores").document(userId)
-            .collection("Visitas").document(poi.nome)
+            .collection("Visitas").document(poi.id)
             .get()
             .addOnSuccessListener { doc ->
                 if (doc.exists()) {
@@ -219,9 +220,10 @@ class PoiDetailActivity : AppCompatActivity() {
     private fun marcarComoVisitado(poi: Poi) {
         val btn = findViewById<Button>(R.id.button_visited)
         val ref = db.collection("Utilizadores").document(userId)
-            .collection("Visitas").document(poi.nome)
+            .collection("Visitas").document(poi.id)
 
         val dados = mapOf(
+            "id" to poi.id,
             "nome" to poi.nome,
             "descricao" to poi.descricao,
             "latitude" to poi.latitude,
