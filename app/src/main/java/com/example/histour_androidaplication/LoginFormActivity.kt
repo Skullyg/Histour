@@ -2,6 +2,7 @@ package com.example.histour_androidaplication
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.util.Patterns
 import android.view.View
 import android.widget.Button
@@ -86,9 +87,11 @@ class ActivityLogin : AppCompatActivity() {
                     if (!documents.isEmpty) {
                         val userDoc = documents.documents[0]
                         val emailFromNome = userDoc.getString("email") ?: ""
+                        Log.d("LOGIN_DEBUG", "Encontrado email: $emailFromNome")
 
                         signInWithEmail(emailFromNome, password, btnReenviarVerificacao)
                     } else {
+                        Log.d("LOGIN_DEBUG", "Nenhum documento com nome ${emailOrNome}")
                         Toast.makeText(
                             this,
                             "Nome de utilizador não encontrado!",
@@ -97,12 +100,14 @@ class ActivityLogin : AppCompatActivity() {
                     }
                 }
                 .addOnFailureListener { e ->
+                    Log.e("LOGIN_DEBUG", "Erro na query Firestore: ${e.message}")
                     Toast.makeText(
                         this,
                         "Erro ao buscar utilizador: ${e.message}",
                         Toast.LENGTH_LONG
                     ).show()
                 }
+
         }
     }
 
